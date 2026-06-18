@@ -1,0 +1,554 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================
+// USER & AUTH
+// ============================
+
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique @map("clerk_id")
+  email         String    @unique
+  displayName   String?   @map("display_name")
+  username      String?   @unique
+  avatarUrl     String?   @map("avatar_url")
+  bio           String?   @db.Text
+  location      String?
+  website       String?
+  timezone      String    @default("UTC")
+  language      String    @default("en")
+  unitSystem    String    @default("metric") @map("unit_system")
+  emailNotifications Boolean @default(true) @map("email_notifications")
+  
+  // Subscription
+  subscriptionTier String   @default("free") @map("subscription_tier")
+  subscriptionStatus String  @default("inactive") @map("subscription_status")
+  stripeCustomerId String?  @map("stripe_customer_id")
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+  currentPeriodEnd DateTime? @map("current_period_end")
+  
+  // Quotas
+  storageUsedBytes BigInt   @default(0) @map("storage_used_bytes")
+  storageQuotaBytes BigInt  @default(1073741824) @map("storage_quota_bytes") // 1GB free
+  aiCreditsUsed   Int      @default(0) @map("ai_credits_used")
+  aiCreditsQuota  Int      @default(10) @map("ai_credits_quota")
+  tripCount       Int      @default(0) @map("trip_count")
+  tripQuota       Int      @default(3) @map("trip_quota")
+  
+  // Relations
+  trips           Trip[]
+  media           Media[]
+  comments        Comment[]
+  likes           Like[]
+  followers       Follow[]  @relation("following")
+  followings      Follow[]  @relation("follower")
+  collaborations  TripCollaborator[]
+  aiJobs          AIJob[]
+  exports         Export[]
+  notifications   Notification[]
+  activities      UserActivity[]
+  sessions        Session[]
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([clerkId])
+  @@index([username])
+  @@index([subscriptionTier])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// ============================
+// TRIPS
+// ============================
+
+model Trip {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String    @db.VarChar(200)
+  slug        String    @unique
+  description String?   @db.Text
+  status      TripStatus @default(DRAFT)
+  privacy     TripPrivacy @default(PRIVATE)
+  
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  
+  coverPhotoId String?  @map("cover_photo_id")
+  coverPhoto   Media?   @relation(fields: [coverPhotoId], references: [id])
+  
+  theme       Json?     // { primaryColor, secondaryColor, fontHeading, fontBody, mapStyle }
+  tags        String[]  @default([])
+  
+  // Stats (denormalized for performance)
+  photosCount   Int     @default(0) @map("photos_count")
+  videosCount   Int     @default(0) @map("videos_count")
+  storyBlocksCount Int  @default(0) @map("story_blocks_count")
+  viewsCount    Int     @default(0) @map("views_count")
+  likesCount    Int     @default(0) @map("likes_count")
+  commentsCount Int     @default(0) @map("comments_count")
+  
+  // Relations
+  locations     TripLocation[]
+  media         Media[]
+  story         Story?
+  collaborators TripCollaborator[]
+  comments      Comment[]
+  likes         Like[]
+  exports       Export[]
+  aiJobs        AIJob[]
+  challengeEntries ChallengeEntry[]
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([slug])
+  @@index([status])
+  @@index([privacy])
+  @@index([createdAt])
+  @@index([tags])
+  @@map("trips")
+}
+
+enum TripStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TripPrivacy {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+model TripLocation {
+  id          String   @id @default(cuid())
+  tripId      String   @map("trip_id")
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  name        String
+  latitude    Float
+  longitude   Float
+  country     String?  // ISO 3166-1 alpha-2
+  city        String?
+  address     String?
+  order       Int      @default(0)
+  arrivedAt   DateTime? @map("arrived_at")
+  departedAt  DateTime? @map("departed_at")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([tripId])
+  @@index([latitude, longitude])
+  @@map("trip_locations")
+}
+
+model TripCollaborator {
+  id        String    @id @default(cuid())
+  tripId    String    @map("trip_id")
+  trip      Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      CollaboratorRole @default(EDITOR)
+  
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@unique([tripId, userId])
+  @@index([tripId])
+  @@index([userId])
+  @@map("trip_collaborators")
+}
+
+enum CollaboratorRole {
+  VIEWER
+  EDITOR
+  ADMIN
+}
+
+// ============================
+// MEDIA
+// ============================
+
+model Media {
+  id          String    @id @default(cuid())
+  tripId      String    @map("trip_id")
+  trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        MediaType
+  mimeType    String    @map("mime_type")
+  filename    String
+  originalUrl String    @map("original_url")
+  
+  // Variants stored as JSON
+  variants    Json?     // { thumbnail: {...}, medium: {...}, large: {...}, webp: {...} }
+  
+  // Metadata
+  width       Int?
+  height      Int?
+  fileSize    BigInt?   @map("file_size")
+  duration    Int?      // For video, in seconds
+  
+  // EXIF
+  exif        Json?     // { camera, lens, aperture, iso, shutterSpeed, takenAt, gps }
+  
+  // User content
+  caption     String?   @db.VarChar(500)
+  tags        String[]  @default([])
+  aiDescription String? @map("ai_description") @db.Text
+  
+  // Location
+  locationName String?  @map("location_name")
+  latitude    Float?
+  longitude   Float?
+  altitude    Float?
+  
+  // Status
+  processingStatus String @default("pending") @map("processing_status")
+  aiEnhanced  Boolean   @default(false) @map("ai_enhanced")
+  
+  // Order in trip
+  order       Int       @default(0)
+  
+  // Cover photo relation
+  coverForTrip Trip?    @relation("TripCover")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([tripId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([latitude, longitude])
+  @@map("media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+// ============================
+// STORY (EDITOR)
+// ============================
+
+model Story {
+  id          String    @id @default(cuid())
+  tripId      String    @unique @map("trip_id")
+  trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  template    String    @default("cinematic-scroll")
+  theme       Json?     // { primaryColor, secondaryColor, fontHeading, fontBody, mapStyle }
+  
+  // Blocks stored as JSON array for flexibility
+  blocks      Json      // [{ id, type, position, content }]
+  version     Int       @default(1)
+  
+  lastEditedBy String   @map("last_edited_by")
+  lastEditedAt DateTime  @default(now()) @map("last_edited_at")
+  
+  publishedAt DateTime? @map("published_at")
+  publishedUrl String?   @map("published_url")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("stories")
+}
+
+// ============================
+// SOCIAL
+// ============================
+
+model Comment {
+  id        String   @id @default(cuid())
+  tripId    String   @map("trip_id")
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content   String   @db.VarChar(2000)
+  parentId  String?  @map("parent_id")
+  
+  likesCount Int    @default(0) @map("likes_count")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tripId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  tripId    String   @map("trip_id")
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([tripId, userId])
+  @@index([tripId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String @map("follower_id")
+  follower    User   @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String @map("following_id")
+  following   User   @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ============================
+// AI
+// ============================
+
+model AIJob {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripId      String?   @map("trip_id")
+  trip        Trip?     @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  
+  type        AIJobType
+  status      AIJobStatus @default(QUEUED)
+  
+  input       Json        // Request parameters
+  result      Json?       // Generated output
+  error       String?     @db.Text
+  
+  tokensUsed  Int?        @map("tokens_used")
+  costUsd     Decimal?    @map("cost_usd") @db.Decimal(10, 6)
+  
+  queuedAt    DateTime    @default(now()) @map("queued_at")
+  startedAt   DateTime?   @map("started_at")
+  completedAt DateTime?   @map("completed_at")
+  
+  @@index([userId])
+  @@index([tripId])
+  @@index([status])
+  @@index([type])
+  @@map("ai_jobs")
+}
+
+enum AIJobType {
+  GENERATE_STORY
+  GENERATE_TITLE
+  GENERATE_CAPTIONS
+  ENHANCE_PHOTO
+  AUTO_LAYOUT
+  TRANSLATE
+  VOICE_NARRATE
+  RECONSTRUCT_ROUTE
+}
+
+enum AIJobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ============================
+// PAYMENTS
+// ============================
+
+model Invoice {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  stripeInvoiceId String   @unique @map("stripe_invoice_id")
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+  
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String   @default("USD")
+  status          String   // paid, open, void, uncollectible
+  
+  periodStart     DateTime @map("period_start")
+  periodEnd       DateTime @map("period_end")
+  
+  pdfUrl          String?  @map("pdf_url")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+  @@map("invoices")
+}
+
+// ============================
+// EXPORTS
+// ============================
+
+model Export {
+  id        String   @id @default(cuid())
+  tripId    String   @map("trip_id")
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  format    ExportFormat
+  status    String   @default("processing") // processing, completed, failed
+  url       String?
+  fileSize  BigInt?  @map("file_size")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([tripId])
+  @@index([userId])
+  @@map("exports")
+}
+
+enum ExportFormat {
+  PDF
+  STATIC_WEB
+  MP4
+  JSON
+}
+
+// ============================
+// CHALLENGES
+// ============================
+
+model Challenge {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @db.Text
+  imageUrl    String?   @map("image_url")
+  
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime  @map("end_date")
+  
+  theme       String?   // e.g., "hidden-gems", "sunset-chasers"
+  rules       String?   @db.Text
+  
+  entries     ChallengeEntry[]
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("challenges")
+}
+
+model ChallengeEntry {
+  id          String    @id @default(cuid())
+  challengeId String    @map("challenge_id")
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  tripId      String    @map("trip_id")
+  trip        Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  
+  votesCount  Int       @default(0) @map("votes_count")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([challengeId, tripId])
+  @@index([challengeId])
+  @@map("challenge_entries")
+}
+
+// ============================
+// NOTIFICATIONS
+// ============================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      String   // like, comment, follow, collaboration, ai_complete
+  title     String
+  body      String   @db.Text
+  data      Json?    // { tripId, userId, commentId }
+  
+  read      Boolean  @default(false)
+  readAt    DateTime? @map("read_at")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================
+// ACTIVITY LOG
+// ============================
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      String   // trip_created, photo_uploaded, story_published, trip_viewed, etc.
+  metadata  Json?    // { tripId, mediaId, ipAddress, userAgent }
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("user_activities")
+}
+
+// ============================
+// MAP CACHE
+// ============================
+
+model MapTileCache {
+  id        String   @id @default(cuid())
+  z         Int
+  x         Int
+  y         Int
+  style     String
+  tileData  Bytes    @map("tile_data")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime  @map("expires_at")
+
+  @@unique([z, x, y, style])
+  @@index([expiresAt])
+  @@map("map_tile_cache")
+}

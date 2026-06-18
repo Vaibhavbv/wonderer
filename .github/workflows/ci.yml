@@ -1,0 +1,39 @@
+name: CI / Lint & Type Check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: ./apps/api
+
+      - name: Lint backend
+        run: npm run lint
+        working-directory: ./apps/api
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: ./apps/web
+
+      - name: Type check frontend
+        run: npm run type-check
+        working-directory: ./apps/web
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: ./apps/web
