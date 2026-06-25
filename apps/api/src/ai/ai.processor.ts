@@ -9,16 +9,32 @@ import { AIJobType } from '@prisma/client';
 @Processor('ai-generation')
 export class AiProcessor extends WorkerHost {
   private readonly logger = new Logger(AiProcessor.name);
-  private openai: OpenAI;
+  private _openai?: OpenAI;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
     super();
-    this.openai = new OpenAI({
-      apiKey: this.configService.get('OPENAI_API_KEY'),
-    });
+  }
+
+  /**
+   * Lazily create the OpenAI client. Instantiating it eagerly in the
+   * constructor crashes app startup when OPENAI_API_KEY is unset, so we
+   * only build it when an AI job actually runs and fail clearly if the
+   * key is missing.
+   */
+  private get openai(): OpenAI {
+    if (!this._openai) {
+      const apiKey = this.configService.get<string>('OPENAI_API_KEY');
+      if (!apiKey) {
+        throw new Error(
+          'OPENAI_API_KEY is not configured; AI generation is unavailable.',
+        );
+      }
+      this._openai = new OpenAI({ apiKey });
+    }
+    return this._openai;
   }
 
   async process(job: Job<any>): Promise<any> {
