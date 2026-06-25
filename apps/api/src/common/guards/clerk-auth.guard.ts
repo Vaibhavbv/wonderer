@@ -7,12 +7,16 @@ import {
 } from '@nestjs/common';
 import { verifyToken } from '@clerk/clerk-sdk-node';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '@prisma/prisma.service';
 
 @Injectable()
 export class ClerkAuthGuard implements CanActivate {
   private readonly logger = new Logger(ClerkAuthGuard.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -30,10 +34,26 @@ export class ClerkAuthGuard implements CanActivate {
         issuer: (issuer: string) => issuer.startsWith('https://clerk.'),
       });
 
+      const clerkId = payload.sub;
+
+      // Resolve the Clerk user to our DB user, auto-provisioning on first
+      // authenticated request so a profile exists immediately after sign-up.
+      // request.user.id must be the DB User.id (cuid) — every authed query
+      // keys off it — NOT the Clerk id (payload.sub).
+      const email = (payload as Record<string, unknown>).email as string | undefined;
+      const user = await this.prisma.user.upsert({
+        where: { clerkId },
+        update: {},
+        create: {
+          clerkId,
+          email: email ?? `${clerkId}@placeholder.wanderverse.app`,
+        },
+      });
+
       request.user = {
-        id: payload.sub,
-        email: payload.email,
-        orgId: payload.org_id,
+        id: user.id,
+        clerkId,
+        email: user.email,
       };
 
       return true;
