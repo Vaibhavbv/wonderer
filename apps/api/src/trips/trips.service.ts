@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { CreateTripDto, UpdateTripDto, TripListQueryDto } from './trips.dto';
-import { TripPrivacy, TripStatus } from '@prisma/client';
+import { Prisma, TripPrivacy, TripStatus } from '@prisma/client';
 import { generateSlug } from '@common/utils/slug';
 
 @Injectable()
@@ -36,7 +36,7 @@ export class TripsService {
       orderBy: { [sortField]: sortOrder },
       include: {
         locations: { orderBy: { order: 'asc' } },
-        coverPhoto: { select: { id: true, thumbnailUrl: true, originalUrl: true } },
+        coverPhoto: { select: { id: true, variants: true, originalUrl: true } },
       },
     });
 
@@ -184,7 +184,7 @@ export class TripsService {
         endDate: original.endDate,
         privacy: 'PRIVATE',
         tags: original.tags,
-        theme: original.theme,
+        theme: original.theme ?? Prisma.JsonNull,
         locations: {
           create: original.locations.map((loc) => ({
             name: loc.name,

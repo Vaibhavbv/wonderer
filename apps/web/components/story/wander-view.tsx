@@ -107,7 +107,7 @@ export function WanderView({ tripId }: WanderViewProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const controlsTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const controlsTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const { scrollYProgress } = useScroll({
     container: containerRef,

@@ -29,7 +29,7 @@ export class MediaService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const estimatedNewSize = user.storageUsedBytes + (dto.fileSize || 0);
+    const estimatedNewSize = user.storageUsedBytes + BigInt(dto.fileSize || 0);
     if (estimatedNewSize > user.storageQuotaBytes) {
       throw new ForbiddenException('Storage quota exceeded. Upgrade your plan.');
     }
