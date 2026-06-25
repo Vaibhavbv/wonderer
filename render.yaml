@@ -1,0 +1,58 @@
+# Render Blueprint — deploys the Wanderverse NestJS API + managed PostgreSQL.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# How to use:
+#   1. Push this file to the repo (already done).
+#   2. Render Dashboard -> New -> Blueprint -> connect the wonderer repo.
+#   3. Render reads this file, creates the database + web service.
+#   4. Fill in the env vars marked "sync: false" (Clerk keys, CORS origin).
+#
+# Notes:
+#   - Free PostgreSQL on Render is deleted after 30 days — fine for a showcase,
+#     upgrade to a paid DB ($7/mo) before relying on it for real users.
+#   - The free web service spins down after ~15 min idle; first request after
+#     idle takes ~30-60s to wake. Upgrade the plan to keep it always-on.
+#   - Redis is intentionally omitted to stay on the free tier. The API boots
+#     without it; only the AI job queue needs Redis (add a Key Value service
+#     and set REDIS_HOST/REDIS_PORT later to enable it).
+
+databases:
+  - name: wanderverse-db
+    databaseName: wanderverse
+    plan: free
+
+services:
+  - type: web
+    name: wanderverse-api
+    runtime: node
+    plan: free
+    rootDir: apps/api
+    # --include=dev forces install of build tools (nest CLI, prisma, typescript)
+    # even though Render sets NODE_ENV=production. Migrations run here because
+    # preDeployCommand requires a paid plan.
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy
+    startCommand: node dist/main
+    healthCheckPath: /v1/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wanderverse-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      # ---- Set these in the Render dashboard (sync: false = not committed) ----
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false      # e.g. https://your-app.vercel.app
+      - key: FRONTEND_URL
+        sync: false      # e.g. https://your-app.vercel.app
+      # ---- Optional features ----
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false

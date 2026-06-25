@@ -73,7 +73,7 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 Wanderverse API running on http://localhost:${port}`);
   console.log(`📚 API Docs available at http://localhost:${port}/v1/docs`);
   console.log(`🔧 Environment: ${nodeEnv}`);
