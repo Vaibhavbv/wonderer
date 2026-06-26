@@ -68,7 +68,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   private snakeCase(str: string): string {
     return str
-      .replace(/([A-Z])/g, '_$1')
+      .replace(/[\s-]+/g, '_')
+      .replace(/([a-z])([A-Z])/g, '$1_$2')
       .replace(/^_/, '')
       .toUpperCase();
   }
