@@ -16,13 +16,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Wanderverse — Your Travel Memories, Reimagined",
-  description: "A premium digital travel-memory platform combining interactive maps, storytelling, and AI-generated travel content. Transform your journeys into immersive, cinematic experiences.",
-  keywords: ["travel", "memories", "maps", "storytelling", "scrapbook", "photos", "journal"],
+  title: "Wanderverse — Map your life",
+  description: "The social network for travel. Your profile is a living map of everywhere you've ever been — follow friends and creators and watch their journeys unfold.",
+  keywords: ["travel", "social", "map", "journeys", "trips", "followers", "digital nomad", "travel map"],
   authors: [{ name: "Wanderverse" }],
   openGraph: {
-    title: "Wanderverse",
-    description: "Your Travel Memories, Reimagined",
+    title: "Wanderverse — Map your life",
+    description: "The social network for travel. Your profile is a living map of everywhere you've ever been.",
     type: "website",
     locale: "en_US",
   },
