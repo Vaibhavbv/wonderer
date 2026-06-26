@@ -1,111 +1,81 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Map, Camera, Wand2, Share2, ChevronRight, ArrowDown } from "lucide-react";
+import { ChevronRight, Plane } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SignInButton } from "@clerk/nextjs";
 
+const ease = [0.16, 1, 0.3, 1] as const;
+
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-background to-secondary-50" />
-      
-      {/* Decorative Elements */}
-      <div className="absolute top-20 right-20 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 left-20 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl" />
-      
+    <section className="relative min-h-screen flex items-end overflow-hidden">
+      {/* Full-bleed editorial photograph */}
+      <div className="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=2000&q=80&auto=format&fit=crop"
+          alt="A winding road through dramatic mountains at golden hour"
+          className="h-full w-full object-cover"
+        />
+        {/* Legibility scrim — darker at the bottom where the text sits */}
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/85 via-neutral-900/30 to-neutral-900/10" />
+      </div>
+
       {/* Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.7, ease }}
+          className="flex items-center gap-2 text-white/90 text-sm font-medium tracking-wide uppercase"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6">
-            <Wand2 className="w-4 h-4" />
-            Now with AI-powered storytelling
-          </span>
+          <Plane className="w-4 h-4 text-primary-400" />
+          The social network for travel
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="font-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight text-text-primary leading-[1.1]"
+          transition={{ duration: 1, delay: 0.1, ease }}
+          className="mt-5 font-heading text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-white leading-[0.95] tracking-tight"
         >
-          Your Travel Memories,
-          <br />
-          <span className="text-primary-500">Reimagined</span>
+          Map your life.
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-6 text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed"
+          transition={{ duration: 0.8, delay: 0.3, ease }}
+          className="mt-6 text-lg sm:text-xl text-white/85 max-w-xl leading-relaxed"
         >
-          Transform your scattered photos and notes into cinematic, interactive travel stories. 
-          Maps, timelines, and AI — all in one beautiful platform.
+          Your profile is a living map of everywhere you&apos;ve ever been. Follow friends and
+          creators, and watch their journeys unfold.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+          transition={{ duration: 0.6, delay: 0.5, ease }}
+          className="mt-9 flex flex-col sm:flex-row items-start sm:items-center gap-4"
         >
           <SignInButton mode="modal">
             <Button size="lg" className="group">
-              Start Your Journey
+              Start your map
               <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </SignInButton>
-          <SignInButton mode="modal">
-            <Button variant="outline" size="lg">
-              Watch Demo
+          <Link href="/discover">
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-white/40 text-white hover:bg-white/10 hover:border-white/60"
+            >
+              Explore journeys
             </Button>
-          </SignInButton>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="mt-16 flex items-center justify-center gap-8 sm:gap-16"
-        >
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-text-primary">47K+</div>
-            <div className="text-sm text-text-tertiary">Travelers</div>
-          </div>
-          <div className="w-px h-12 bg-border" />
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-text-primary">1.2M+</div>
-            <div className="text-sm text-text-tertiary">Photos Mapped</div>
-          </div>
-          <div className="w-px h-12 bg-border" />
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-text-primary">180+</div>
-            <div className="text-sm text-text-tertiary">Countries</div>
-          </div>
+          </Link>
         </motion.div>
       </div>
-
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <ArrowDown className="w-5 h-5 text-text-tertiary" />
-        </motion.div>
-      </motion.div>
     </section>
   );
 }
