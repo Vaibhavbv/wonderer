@@ -1,51 +1,51 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Upload, MapPin, Pen, Rocket } from "lucide-react";
+import { AtSign, MapPin, Users, Compass } from "lucide-react";
 
 const steps = [
   {
     number: "01",
-    icon: Upload,
-    title: "Import Your Media",
-    description: "Upload photos from your camera roll, Google Photos, or Apple Photos. We auto-extract GPS, timestamps, and EXIF data.",
+    icon: AtSign,
+    title: "Claim your handle",
+    description: "Create your profile and start your living travel map. Your @handle is your passport.",
   },
   {
     number: "02",
     icon: MapPin,
-    title: "Map Your Route",
-    description: "Watch your photos appear on an interactive map. Our AI reconstructs your travel route from photo metadata.",
+    title: "Add your trips",
+    description: "Drop in photos and places. Moments cluster into trips and land on your map automatically.",
   },
   {
     number: "03",
-    icon: Pen,
-    title: "Craft Your Story",
-    description: "Use our drag-and-drop editor with AI-assisted text generation. Choose from cinematic scroll, magazine, or timeline layouts.",
+    icon: Users,
+    title: "Grow your following",
+    description: "Share your map. Friends and creators follow you and watch every new journey unfold.",
   },
   {
     number: "04",
-    icon: Rocket,
-    title: "Share the World",
-    description: "Publish with a beautiful public link, embed on your blog, or export to PDF, static website, or MP4 video.",
+    icon: Compass,
+    title: "Explore & get inspired",
+    description: "Save places from journeys you love straight to your bucket list, and plan what's next.",
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section className="py-24 bg-neutral-50">
+    <section className="py-24 sm:py-32 bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="max-w-2xl mb-16"
         >
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-text-primary">
+          <h2 className="font-heading text-4xl sm:text-5xl text-text-primary leading-tight">
             How it works
           </h2>
-          <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto">
-            From raw photos to cinematic travel stories in four simple steps.
+          <p className="mt-4 text-lg text-text-secondary">
+            From your first trip to a following that travels with you — in four steps.
           </p>
         </motion.div>
 
@@ -59,13 +59,13 @@ export function HowItWorksSection() {
               transition={{ duration: 0.5, delay: index * 0.15 }}
               className="relative"
             >
-              <div className="text-6xl font-heading font-bold text-primary-100 mb-4">
+              <div className="text-6xl font-heading text-primary-100 mb-4">
                 {step.number}
               </div>
               <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center mb-4">
                 <step.icon className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-heading text-xl font-semibold text-text-primary mb-2">
+              <h3 className="font-heading text-xl text-text-primary mb-2">
                 {step.title}
               </h3>
               <p className="text-text-secondary leading-relaxed">
