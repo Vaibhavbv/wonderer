@@ -1,64 +1,58 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Map, Camera, Wand2, Globe, Share2, Lock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Map, Users, Bookmark, Award, Film, Camera } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const features = [
   {
     icon: Map,
-    title: "Interactive Maps",
-    description: "Pin your photos to exact GPS coordinates. Watch animated routes unfold as you scroll through your journey.",
-    color: "bg-primary-100 text-primary-600",
+    title: "Your travel-life map",
+    description: "Every trip you've ever taken, connected on one living map that grows as you go.",
+  },
+  {
+    icon: Users,
+    title: "Follow your people",
+    description: "Follow friends and creators, and watch their journeys unfold in your feed.",
+  },
+  {
+    icon: Bookmark,
+    title: "Save to bucket list",
+    description: "Tap any place in someone's trip to drop it straight onto your own future map.",
+  },
+  {
+    icon: Award,
+    title: "Travel passport",
+    description: "Countries, cities, and miles tracked automatically — a stamp for every place.",
+  },
+  {
+    icon: Film,
+    title: "Cinematic recaps",
+    description: "Auto-generated recap videos of your journeys, ready to share anywhere.",
   },
   {
     icon: Camera,
-    title: "Smart Scrapbook",
-    description: "Drag-and-drop editor with magazine-grade templates. Auto-layout your photos into stunning compositions.",
-    color: "bg-accent-100 text-accent-600",
-  },
-  {
-    icon: Wand2,
-    title: "AI Storytelling",
-    description: "Generate narratives, captions, and titles from your photos. Translate stories to 20+ languages instantly.",
-    color: "bg-secondary-100 text-secondary-600",
-  },
-  {
-    icon: Globe,
-    title: "3D Globe View",
-    description: "Fly between destinations on a stunning 3D globe. Cinematic zoom transitions that feel like Google Earth.",
-    color: "bg-primary-100 text-primary-600",
-  },
-  {
-    icon: Share2,
-    title: "Beautiful Sharing",
-    description: "Share public links, embed widgets, or export to PDF, static sites, and MP4 videos.",
-    color: "bg-accent-100 text-accent-600",
-  },
-  {
-    icon: Lock,
-    title: "Privacy First",
-    description: "End-to-end encryption for private trips. Full GDPR compliance with complete data export and deletion.",
-    color: "bg-secondary-100 text-secondary-600",
+    title: "Moments & stories",
+    description: "Post where you are right now, or build a trip moment by moment.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 sm:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="max-w-2xl mb-16"
         >
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-text-primary">
-            Everything you need to tell your story
+          <h2 className="font-heading text-4xl sm:text-5xl text-text-primary leading-tight">
+            Everywhere you&apos;ve been, in one place
           </h2>
-          <p className="mt-4 text-lg text-text-secondary max-w-2xl mx-auto">
-            A complete toolkit for modern travelers who want more than just photo albums.
+          <p className="mt-4 text-lg text-text-secondary">
+            Wanderverse turns your travels into a living map worth following — and worth showing off.
           </p>
         </motion.div>
 
@@ -69,11 +63,11 @@ export function FeaturesSection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
             >
               <Card className="h-full">
                 <CardHeader>
-                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", feature.color)}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary-50 text-primary-600">
                     <feature.icon className="w-6 h-6" />
                   </div>
                   <CardTitle>{feature.title}</CardTitle>
@@ -86,8 +80,4 @@ export function FeaturesSection() {
       </div>
     </section>
   );
-}
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
 }
