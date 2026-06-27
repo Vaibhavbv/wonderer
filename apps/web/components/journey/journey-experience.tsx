@@ -18,7 +18,7 @@ import { RouteVehicle } from "./route-vehicle";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-export function JourneyExperience() {
+export function JourneyExperience({ destinations = journey }: { destinations?: Destination[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -28,7 +28,7 @@ export function JourneyExperience() {
   // A gentle spring so the whole scene glides instead of snapping.
   const progress = useSpring(scrollYProgress, { stiffness: 80, damping: 28, mass: 0.6 });
 
-  const n = journey.length;
+  const n = destinations.length;
   const [active, setActive] = useState(0);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
@@ -36,14 +36,14 @@ export function JourneyExperience() {
     if (i !== active) setActive(i);
   });
 
-  const dest = journey[active];
+  const dest = destinations[active];
 
   return (
     <div ref={containerRef} style={{ height: `${(n + 1) * 100}vh` }} className="relative bg-black">
       {/* Fixed cinematic stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         {/* Crossfading destination photographs */}
-        {journey.map((d, i) => (
+        {destinations.map((d, i) => (
           <BackgroundLayer key={d.id} dest={d} index={i} total={n} progress={progress} />
         ))}
 
@@ -101,7 +101,7 @@ export function JourneyExperience() {
 
         {/* Progress indicator — the itinerary */}
         <div className="absolute left-4 sm:left-10 top-1/2 -translate-y-1/2 z-20 hidden sm:flex flex-col gap-3">
-          {journey.map((d, i) => (
+          {destinations.map((d, i) => (
             <div key={d.id} className="flex items-center gap-3">
               <div
                 className="h-px transition-all duration-500"
@@ -145,6 +145,14 @@ function BackgroundLayer({
   const span = 0.75 / total;
   const opacity = useTransform(progress, [center - span, center, center + span], [0, 1, 0]);
   const scale = useTransform(progress, [center - span, center, center + span], [1.18, 1.06, 1.18]);
+  if (!dest.image) {
+    return (
+      <motion.div
+        className="absolute inset-0"
+        style={{ opacity, background: `linear-gradient(160deg, ${dest.theme.from}, ${dest.theme.to})` }}
+      />
+    );
+  }
   return (
     <motion.div className="absolute inset-0" style={{ opacity }}>
       <motion.img src={dest.image} alt={dest.name} style={{ scale }} className="h-full w-full object-cover" />

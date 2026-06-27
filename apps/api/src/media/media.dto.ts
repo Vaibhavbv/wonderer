@@ -45,4 +45,9 @@ export class UpdateMediaDto {
   @IsOptional()
   @IsLongitude()
   longitude?: number;
+
+  @ApiPropertyOptional({ description: 'Trip location this media belongs to' })
+  @IsOptional()
+  @IsString()
+  locationId?: string;
 }

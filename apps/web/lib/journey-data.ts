@@ -6,15 +6,15 @@ export type Vehicle = "plane" | "van" | "jeep" | "motorcycle" | "train" | "ballo
 export interface Destination {
   id: string;
   name: string;
-  country: string;
-  date: string;
-  days: number;
+  country?: string;
+  date?: string;
+  days?: number;
   memories: number;
-  favorite: string;
-  weather: string;
+  favorite?: string;
+  weather?: string;
   mood: string;
   vehicle: Vehicle;
-  image: string;
+  image?: string;
   // Theme — atmosphere colors for this leg (hex, work on a dark scrim).
   theme: {
     from: string; // gradient top

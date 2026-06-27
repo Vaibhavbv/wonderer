@@ -160,7 +160,12 @@ model TripLocation {
   order       Int      @default(0)
   arrivedAt   DateTime? @map("arrived_at")
   departedAt  DateTime? @map("departed_at")
-  
+
+  notes       String?  @db.Text // the traveler's memory/story for this stop
+  theme       Json?    // computed atmosphere { from, to, accent, particle }
+
+  media       Media[]
+
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([tripId])
@@ -201,6 +206,8 @@ model Media {
   trip        Trip      @relation("TripMedia", fields: [tripId], references: [id], onDelete: Cascade)
   userId      String    @map("user_id")
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locationId  String?   @map("location_id")
+  location    TripLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   type        MediaType
   mimeType    String    @map("mime_type")
@@ -245,6 +252,7 @@ model Media {
 
   @@index([tripId])
   @@index([userId])
+  @@index([locationId])
   @@index([type])
   @@index([createdAt])
   @@index([latitude, longitude])

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsDateString, IsObject, ValidateNested, ArrayMinSize, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsEnum, IsDateString, IsObject, IsNumber, ValidateNested, ArrayMinSize, MaxLength, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -9,13 +9,15 @@ export class LocationDto {
   @MaxLength(200)
   name: string;
 
-  @ApiProperty()
-  @IsString()
-  latitude: number;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
 
-  @ApiProperty()
-  @IsString()
-  longitude: number;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -26,6 +28,12 @@ export class LocationDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @ApiPropertyOptional({ description: 'The traveler\'s memory/story for this stop' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
 }
 
 export class CreateTripDto {
