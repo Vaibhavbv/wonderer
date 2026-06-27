@@ -11,12 +11,23 @@ export class TripsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  // Maps snake_case sort keys from the query string to Prisma schema fields.
+  private static readonly SORT_FIELDS: Record<string, string> = {
+    created_at: 'createdAt',
+    updated_at: 'updatedAt',
+    start_date: 'startDate',
+    end_date: 'endDate',
+    title: 'title',
+  };
+
   async listTrips(
     userId: string,
     query: TripListQueryDto,
     pagination: { cursor?: string; perPage: number; sort: string },
   ) {
-    const [sortField, sortOrder] = pagination.sort.split(':');
+    const [rawField, rawOrder] = pagination.sort.split(':');
+    const sortField = TripsService.SORT_FIELDS[rawField] ?? 'createdAt';
+    const sortOrder = rawOrder === 'asc' ? 'asc' : 'desc';
     const where = {
       userId,
       ...(query.status && { status: query.status as TripStatus }),

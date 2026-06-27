@@ -48,13 +48,19 @@ export class MediaService {
     const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 900 });
     const cdnUrl = `https://cdn.wanderverse.com/${key}`;
 
+    const mediaType = dto.contentType.startsWith('video')
+      ? 'VIDEO'
+      : dto.contentType.startsWith('audio')
+        ? 'AUDIO'
+        : 'IMAGE';
+
     // Create media record
     await this.prisma.media.create({
       data: {
         id: mediaId,
         tripId: dto.tripId,
         userId,
-        type: dto.contentType.startsWith('video') ? 'VIDEO' : dto.contentType.startsWith('audio') ? 'AUDIO' : 'IMAGE',
+        type: mediaType,
         mimeType: dto.contentType,
         filename: dto.filename,
         originalUrl: cdnUrl,
@@ -62,6 +68,14 @@ export class MediaService {
         processingStatus: 'uploading',
       },
     });
+
+    // Keep the trip's denormalized media counters in sync.
+    if (mediaType === 'IMAGE' || mediaType === 'VIDEO') {
+      await this.prisma.trip.update({
+        where: { id: dto.tripId },
+        data: mediaType === 'VIDEO' ? { videosCount: { increment: 1 } } : { photosCount: { increment: 1 } },
+      });
+    }
 
     return {
       mediaId,
@@ -83,7 +97,14 @@ export class MediaService {
     tripId: string,
     pagination: { cursor?: string; perPage: number; sort: string },
   ) {
-    const [sortField, sortOrder] = pagination.sort.split(':');
+    const sortMap: Record<string, string> = {
+      created_at: 'createdAt',
+      updated_at: 'updatedAt',
+      order: 'order',
+    };
+    const [rawField, rawOrder] = pagination.sort.split(':');
+    const sortField = sortMap[rawField] ?? 'createdAt';
+    const sortOrder = rawOrder === 'asc' ? 'asc' : 'desc';
     const media = await this.prisma.media.findMany({
       where: { tripId, userId },
       take: pagination.perPage + 1,
@@ -141,6 +162,13 @@ export class MediaService {
     if (media.userId !== userId) throw new ForbiddenException();
 
     await this.prisma.media.delete({ where: { id: mediaId } });
+
+    if (media.type === 'IMAGE' || media.type === 'VIDEO') {
+      await this.prisma.trip.update({
+        where: { id: media.tripId },
+        data: media.type === 'VIDEO' ? { videosCount: { decrement: 1 } } : { photosCount: { decrement: 1 } },
+      });
+    }
     // TODO: Trigger S3 deletion async
     return { deleted: true };
   }

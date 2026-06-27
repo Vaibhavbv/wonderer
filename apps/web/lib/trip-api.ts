@@ -77,11 +77,55 @@ export interface TripRecord {
   tags: string[];
   locations: TripLocationRecord[];
   media: TripMediaRecord[];
+  coverPhoto: TripMediaRecord | null;
+}
+
+// Lightweight shape returned by the list endpoint (no media included).
+export interface TripSummary {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  privacy: "PRIVATE" | "UNLISTED" | "PUBLIC";
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  photosCount: number;
+  videosCount: number;
+  storyBlocksCount: number;
+  locations: { name: string; country: string | null }[];
+  coverPhoto: { id: string; variants: Record<string, { url: string }> | null; originalUrl: string } | null;
+}
+
+export async function getTrips(token: string): Promise<{ items: TripSummary[]; total: number }> {
+  const res = await fetch(`${API_URL}/v1/trips?per_page=50&sort=created_at:desc`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.success) {
+    throw new ApiError(json?.error?.message || `Request failed (${res.status})`, res.status);
+  }
+  const items = (json.data as TripSummary[]) ?? [];
+  return { items, total: json.meta?.total ?? items.length };
 }
 
 export async function createTrip(token: string, input: CreateTripInput): Promise<TripRecord> {
   const res = await fetch(`${API_URL}/v1/trips`, {
     method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(input),
+  });
+  return unwrap<TripRecord>(res);
+}
+
+export async function updateTrip(
+  token: string,
+  tripId: string,
+  input: { coverPhotoId?: string; title?: string; description?: string; privacy?: string; status?: string },
+): Promise<TripRecord> {
+  const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}`, {
+    method: "PATCH",
     headers: authHeaders(token),
     body: JSON.stringify(input),
   });
