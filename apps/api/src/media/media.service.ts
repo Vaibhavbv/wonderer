@@ -115,6 +115,13 @@ export class MediaService {
     if (!media) throw new NotFoundException('Media not found');
     if (media.userId !== userId) throw new ForbiddenException();
 
+    if (dto.locationId) {
+      const location = await this.prisma.tripLocation.findUnique({ where: { id: dto.locationId } });
+      if (!location || location.tripId !== media.tripId) {
+        throw new BadRequestException('Location does not belong to this trip');
+      }
+    }
+
     return this.prisma.media.update({
       where: { id: mediaId },
       data: {
@@ -123,6 +130,7 @@ export class MediaService {
         ...(dto.locationName && { locationName: dto.locationName }),
         ...(dto.latitude !== undefined && { latitude: dto.latitude }),
         ...(dto.longitude !== undefined && { longitude: dto.longitude }),
+        ...(dto.locationId && { locationId: dto.locationId }),
       },
     });
   }

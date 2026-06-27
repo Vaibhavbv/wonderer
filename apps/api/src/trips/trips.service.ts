@@ -3,6 +3,7 @@ import { PrismaService } from '@prisma/prisma.service';
 import { CreateTripDto, UpdateTripDto, TripListQueryDto } from './trips.dto';
 import { Prisma, TripPrivacy, TripStatus } from '@prisma/client';
 import { generateSlug } from '@common/utils/slug';
+import { inferTheme } from '@common/utils/theme-inference';
 
 @Injectable()
 export class TripsService {
@@ -78,11 +79,13 @@ export class TripsService {
         locations: {
           create: dto.locations?.map((loc, idx) => ({
             name: loc.name,
-            latitude: loc.latitude,
-            longitude: loc.longitude,
+            latitude: loc.latitude ?? 0,
+            longitude: loc.longitude ?? 0,
             country: loc.country,
             city: loc.city,
             order: idx,
+            notes: loc.notes,
+            theme: inferTheme(loc.name, loc.country, dto.tags) as Prisma.InputJsonValue,
           })) || [],
         },
       },
@@ -105,7 +108,7 @@ export class TripsService {
       include: {
         locations: { orderBy: { order: 'asc' } },
         coverPhoto: true,
-        media: { orderBy: { order: 'asc' }, take: 20 },
+        media: { orderBy: { order: 'asc' } },
         collaborators: { include: { user: { select: { id: true, displayName: true, avatarUrl: true } } } },
       },
     });
@@ -193,6 +196,8 @@ export class TripsService {
             country: loc.country,
             city: loc.city,
             order: loc.order,
+            notes: loc.notes,
+            theme: loc.theme ?? Prisma.JsonNull,
           })),
         },
       },
