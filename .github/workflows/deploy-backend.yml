@@ -36,7 +36,23 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      # Deploy only runs once the Render secrets are configured. Until then it
+      # skips cleanly so the workflow isn't red on every push.
+      - name: Check Render credentials
+        id: render_check
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          if [ -n "$RENDER_API_KEY" ] && [ -n "$RENDER_SERVICE_ID" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Render secrets not set — skipping deploy. Add RENDER_API_KEY and RENDER_SERVICE_ID in repo settings to enable."
+          fi
+
       - name: Deploy to Render
+        if: steps.render_check.outputs.configured == 'true'
         uses: johnbeynon/render-deploy-action@v0.0.8
         with:
           service-id: ${{ secrets.RENDER_SERVICE_ID }}
