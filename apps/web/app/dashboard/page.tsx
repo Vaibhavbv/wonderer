@@ -4,10 +4,30 @@ import { Navbar } from "@/components/layout/navbar";
 import { TripGrid } from "@/components/dashboard/trip-grid";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { CreateTripButton } from "@/components/dashboard/create-trip-button";
+import { getTrips, type TripSummary } from "@/lib/trip-api";
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
+  const { userId, getToken } = await auth();
   if (!userId) redirect("/");
+
+  let trips: TripSummary[] = [];
+  let total = 0;
+  try {
+    const token = await getToken();
+    if (token) {
+      const res = await getTrips(token);
+      trips = res.items;
+      total = res.total;
+    }
+  } catch {
+    // API unreachable — render an empty dashboard rather than crashing the page.
+  }
+
+  const photos = trips.reduce((sum, t) => sum + (t.photosCount || 0), 0);
+  const stories = trips.reduce((sum, t) => sum + (t.storyBlocksCount || 0), 0);
+  const countries = new Set(
+    trips.flatMap((t) => t.locations.map((l) => l.country).filter(Boolean)),
+  ).size;
 
   return (
     <div className="min-h-screen bg-background">
@@ -21,9 +41,9 @@ export default async function DashboardPage() {
             </div>
             <CreateTripButton />
           </div>
-          <StatsCards />
+          <StatsCards stats={{ trips: total, photos, stories, countries }} />
           <div className="mt-10">
-            <TripGrid />
+            <TripGrid trips={trips} />
           </div>
         </div>
       </main>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Plus, X, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createTrip, getPresignedUrl, updateMedia, uploadToPresignedUrl } from "@/lib/trip-api";
+import { createTrip, getPresignedUrl, updateMedia, updateTrip, uploadToPresignedUrl } from "@/lib/trip-api";
 
 interface DraftDestination {
   key: string;
@@ -75,9 +75,10 @@ export function CreateTripButton() {
         })),
       });
 
-      await Promise.all(
+      const uploadedIds = await Promise.all(
         trip.locations.map(async (location, idx) => {
           const files = validDestinations[idx]?.files ?? [];
+          const ids: string[] = [];
           for (const file of files) {
             try {
               const presigned = await getPresignedUrl(token, {
@@ -88,12 +89,24 @@ export function CreateTripButton() {
               });
               await uploadToPresignedUrl(presigned.uploadUrl, file);
               await updateMedia(token, presigned.mediaId, { locationId: location.id });
+              ids.push(presigned.mediaId);
             } catch (err) {
               console.error("Photo upload failed", err);
             }
           }
+          return ids;
         }),
       );
+
+      // Use the first successfully uploaded photo as the trip cover.
+      const firstPhotoId = uploadedIds.flat()[0];
+      if (firstPhotoId) {
+        try {
+          await updateTrip(token, trip.id, { coverPhotoId: firstPhotoId });
+        } catch (err) {
+          console.error("Failed to set cover photo", err);
+        }
+      }
 
       router.push(`/trips/${trip.id}/wander`);
     } catch (err) {
