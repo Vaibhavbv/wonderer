@@ -96,7 +96,7 @@ export class TripsService {
             city: loc.city,
             order: idx,
             notes: loc.notes,
-            theme: inferTheme(loc.name, loc.country, dto.tags) as Prisma.InputJsonValue,
+            theme: inferTheme(loc.name, loc.country, dto.tags) as unknown as Prisma.InputJsonValue,
           })) || [],
         },
       },
