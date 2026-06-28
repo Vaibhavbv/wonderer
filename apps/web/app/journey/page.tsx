@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { JourneyExperience } from "@/components/journey/journey-experience";
+import { MapJourney } from "@/components/journey/map-journey";
 
 export const metadata: Metadata = {
   title: "Your journey — Wanderverse",
   description:
-    "Scroll through a cinematic journey across the world — every destination, drawn on a living map.",
+    "Fly across a living 3D map — every destination, one cinematic journey.",
 };
 
 export default function JourneyPage() {
-  return <JourneyExperience />;
+  return <MapJourney />;
 }

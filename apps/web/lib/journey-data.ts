@@ -15,6 +15,9 @@ export interface Destination {
   mood: string;
   vehicle: Vehicle;
   image: string;
+  // Real coordinates [lng, lat] and the cinematic camera framing for this stop.
+  coord: [number, number];
+  camera: { zoom: number; pitch: number; bearing: number };
   // Theme — atmosphere colors for this leg (hex, work on a dark scrim).
   theme: {
     from: string; // gradient top
@@ -37,6 +40,8 @@ export const journey: Destination[] = [
     mood: "Where it all began",
     vehicle: "jeep",
     image: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1600&q=80&auto=format&fit=crop",
+    coord: [77.209, 28.6139],
+    camera: { zoom: 9.5, pitch: 55, bearing: 20 },
     theme: { from: "#3a2718", to: "#1a1209", accent: "#E8A33D", particle: "sand" },
   },
   {
@@ -51,6 +56,8 @@ export const journey: Destination[] = [
     mood: "The river calls",
     vehicle: "motorcycle",
     image: "https://images.unsplash.com/photo-1591018653367-7cd4f0f3c0a6?w=1600&q=80&auto=format&fit=crop",
+    coord: [78.2676, 30.0869],
+    camera: { zoom: 11, pitch: 62, bearing: -15 },
     theme: { from: "#14342b", to: "#0a1a16", accent: "#34d399", particle: "leaves" },
   },
   {
@@ -65,6 +72,8 @@ export const journey: Destination[] = [
     mood: "Cold desert, warm hearts",
     vehicle: "jeep",
     image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1600&q=80&auto=format&fit=crop",
+    coord: [78.0719, 32.2264],
+    camera: { zoom: 10.5, pitch: 68, bearing: 30 },
     theme: { from: "#1e3a5f", to: "#0a1626", accent: "#7cc4ff", particle: "snow" },
   },
   {
@@ -79,6 +88,8 @@ export const journey: Destination[] = [
     mood: "Roof of the world",
     vehicle: "motorcycle",
     image: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=1600&q=80&auto=format&fit=crop",
+    coord: [77.5771, 34.1526],
+    camera: { zoom: 10, pitch: 64, bearing: -25 },
     theme: { from: "#243b53", to: "#0d1b29", accent: "#9ad0ec", particle: "mist" },
   },
   {
@@ -93,6 +104,8 @@ export const journey: Destination[] = [
     mood: "Salt, sun, and slow days",
     vehicle: "van",
     image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=1600&q=80&auto=format&fit=crop",
+    coord: [74.04, 15.28],
+    camera: { zoom: 10.5, pitch: 60, bearing: 10 },
     theme: { from: "#5a2e1a", to: "#2a1409", accent: "#ff9e5e", particle: "sun" },
   },
   {
@@ -107,6 +120,8 @@ export const journey: Destination[] = [
     mood: "Quiet magic everywhere",
     vehicle: "train",
     image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1600&q=80&auto=format&fit=crop",
+    coord: [135.7681, 35.0116],
+    camera: { zoom: 11, pitch: 60, bearing: -20 },
     theme: { from: "#5a2438", to: "#2a1019", accent: "#ff8fb1", particle: "petals" },
   },
   {
@@ -121,6 +136,8 @@ export const journey: Destination[] = [
     mood: "Where the journey peaks",
     vehicle: "train",
     image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=1600&q=80&auto=format&fit=crop",
+    coord: [7.7491, 46.0207],
+    camera: { zoom: 11.5, pitch: 70, bearing: 15 },
     theme: { from: "#22384d", to: "#0c1822", accent: "#a8e0ff", particle: "snow" },
   },
 ];
