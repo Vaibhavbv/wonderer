@@ -1,19 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar, Clock, Heart, CloudSun, Sparkles } from "lucide-react";
 import type { Destination } from "@/lib/journey-data";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-export function DestinationCard({ dest }: { dest: Destination }) {
-  return (
+export function DestinationCard({ dest, href }: { dest: Destination; href?: string }) {
+  const card = (
     <motion.div
       initial={{ opacity: 0, y: 24, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -24, scale: 0.96 }}
+      whileHover={href ? { scale: 1.02 } : undefined}
       transition={{ duration: 0.7, ease }}
-      className="w-[300px] sm:w-[340px] rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur-2xl shadow-2xl"
+      className={`w-[300px] sm:w-[340px] rounded-3xl border border-white/15 bg-white/10 p-5 backdrop-blur-2xl shadow-2xl ${
+        href ? "cursor-pointer transition-colors hover:border-white/30" : ""
+      }`}
       style={{ boxShadow: `0 20px 60px -20px ${dest.theme.accent}55` }}
     >
       <div
@@ -44,6 +48,8 @@ export function DestinationCard({ dest }: { dest: Destination }) {
       )}
     </motion.div>
   );
+
+  return href ? <Link href={href}>{card}</Link> : card;
 }
 
 function Row({ icon, label }: { icon: React.ReactNode; label: string }) {

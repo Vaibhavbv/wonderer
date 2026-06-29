@@ -18,7 +18,13 @@ import { RouteVehicle } from "./route-vehicle";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-export function JourneyExperience({ destinations = journey }: { destinations?: Destination[] }) {
+export function JourneyExperience({
+  destinations = journey,
+  cardHrefBase,
+}: {
+  destinations?: Destination[];
+  cardHrefBase?: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -95,7 +101,7 @@ export function JourneyExperience({ destinations = journey }: { destinations?: D
         {/* Floating glass destination card */}
         <div className="absolute bottom-10 right-4 sm:right-10 z-20">
           <AnimatePresence mode="wait">
-            <DestinationCard key={dest.id} dest={dest} />
+            <DestinationCard key={dest.id} dest={dest} href={cardHrefBase ? `${cardHrefBase}/${dest.id}` : undefined} />
           </AnimatePresence>
         </div>
 

@@ -94,3 +94,16 @@ export async function getDiscover(): Promise<Paginated<FeedTrip>> {
   const res = await fetch(`${API_URL}/v1/discover`, { next: { revalidate: 30 } });
   return unwrap<Paginated<FeedTrip>>(res);
 }
+
+export interface Me {
+  id: string;
+  username: string | null;
+}
+
+// Client-side authenticated fetch for the signed-in user's own record.
+export async function getMe(token: string): Promise<Me> {
+  const res = await fetch(`${API_URL}/v1/users/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return unwrap<Me>(res);
+}
