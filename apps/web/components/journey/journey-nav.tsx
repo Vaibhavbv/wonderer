@@ -5,9 +5,9 @@ import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { Plane } from "lucide-react";
 
 const links = [
-  { label: "Journey", href: "/" },
   { label: "Discover", href: "/discover" },
-  { label: "Gallery", href: "/discover" },
+  { label: "About", href: "/about" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 export function JourneyNav({ accent }: { accent: string }) {
