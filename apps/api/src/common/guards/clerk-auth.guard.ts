@@ -31,6 +31,11 @@ export class ClerkAuthGuard implements CanActivate {
     try {
       const payload = await verifyToken(token, {
         secretKey: this.configService.get('CLERK_SECRET_KEY'),
+        // Not validating against a specific issuer (same as omitting the
+        // option) — only required by the type signature, not by runtime
+        // behavior: verifyJwt() skips the issuer check unless `issuer` is a
+        // string or function.
+        issuer: null,
       });
 
       const clerkId = payload.sub;
