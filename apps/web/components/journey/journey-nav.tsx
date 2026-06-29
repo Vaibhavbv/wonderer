@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { Plane } from "lucide-react";
+import { useMyUsername } from "@/lib/use-my-username";
 
 const links = [
+  { label: "Home", href: "/" },
   { label: "Discover", href: "/discover" },
-  { label: "About", href: "/about" },
-  { label: "Pricing", href: "/pricing" },
+  { label: "Destinations", href: "/destinations" },
 ];
 
 export function JourneyNav({ accent }: { accent: string }) {
   const { isSignedIn } = useUser();
+  const username = useMyUsername();
+  const profileHref = username ? `/profiles/${username}` : "/dashboard";
   return (
     <header className="fixed top-0 left-0 right-0 z-40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -41,6 +44,9 @@ export function JourneyNav({ accent }: { accent: string }) {
           <div className="flex items-center gap-3">
             {isSignedIn ? (
               <>
+                <Link href={profileHref} className="text-sm text-white/80 hover:text-white">
+                  Profile
+                </Link>
                 <Link href="/dashboard" className="text-sm text-white/80 hover:text-white">
                   Dashboard
                 </Link>

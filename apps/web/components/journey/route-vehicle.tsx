@@ -69,30 +69,30 @@ export function RouteVehicle({
     <svg
       className="absolute inset-0 h-full w-full"
       viewBox="0 0 1000 2100"
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
       {/* faint full route */}
-      <path ref={baseRef} d={PATH} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="3" strokeLinecap="round" strokeDasharray="2 10" />
+      <path ref={baseRef} d={PATH} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="5" strokeLinecap="round" strokeDasharray="3 14" />
       {/* glowing drawn trail */}
       <path
         ref={trailRef}
         d={PATH}
         fill="none"
         stroke={accent}
-        strokeWidth="4"
+        strokeWidth="7"
         strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 8px ${accent})`, transition: "stroke 0.8s ease" }}
+        style={{ filter: `drop-shadow(0 0 10px ${accent})`, transition: "stroke 0.8s ease" }}
       />
       {/* vehicle */}
       <g ref={vehicleRef}>
-        <circle r="15" fill={accent} opacity="0.18" />
-        <circle r="7" fill={accent} style={{ transition: "fill 0.8s ease" }} />
+        <circle r="24" fill={accent} opacity="0.18" />
+        <circle r="12" fill={accent} style={{ transition: "fill 0.8s ease" }} />
         <path
           d={VEHICLE_GLYPH[vehicle]}
           fill="none"
           stroke="#0c0c0c"
-          strokeWidth="1.4"
+          strokeWidth="2.2"
           strokeLinejoin="round"
           strokeLinecap="round"
         />

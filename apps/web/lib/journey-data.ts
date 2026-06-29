@@ -124,3 +124,7 @@ export const journey: Destination[] = [
     theme: { from: "#22384d", to: "#0c1822", accent: "#a8e0ff", particle: "snow" },
   },
 ];
+
+export function getDestination(id: string): Destination | undefined {
+  return journey.find((d) => d.id === id);
+}
