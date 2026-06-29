@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const PUBLIC_PRIVACIES = ['PUBLIC', 'UNLISTED'] as const;
 
@@ -38,7 +39,10 @@ const feedTripSelect = {
 export class SocialService {
   private readonly logger = new Logger(SocialService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   private async findUserByUsername(username: string) {
     const user = await this.prisma.user.findUnique({ where: { username } });
@@ -119,6 +123,16 @@ export class SocialService {
     } catch (e) {
       throw new ConflictException('Already following this user');
     }
+
+    const follower = await this.prisma.user.findUnique({ where: { id: followerId }, select: publicUserSelect });
+    await this.notifications.create({
+      userId: target.id,
+      type: 'follow',
+      title: 'New follower',
+      body: `${follower?.displayName || follower?.username || 'Someone'} started following you`,
+      data: { userId: followerId },
+    });
+
     return { following: true };
   }
 

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Edit, Play, Image as ImageIcon, Share2 } from "lucide-react";
+import { MapPin, Calendar, Edit, Play, Image as ImageIcon, Share2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LikeButton } from "@/components/trips/like-button";
+import { CommentThread } from "@/components/trips/comment-thread";
 import { formatDate } from "@/lib/utils";
 import type { TripRecord, TripMediaRecord } from "@/lib/trip-api";
 
@@ -75,6 +77,10 @@ export function TripDetail({ trip }: { trip: TripRecord }) {
             <ImageIcon className="w-4 h-4" />
             {images.length} photos
           </span>
+          <a href="#comments" className="flex items-center gap-1 hover:text-primary-600 transition-colors">
+            <MessageCircle className="w-4 h-4" />
+            {trip.commentsCount} {trip.commentsCount === 1 ? "comment" : "comments"}
+          </a>
         </div>
 
         <div className="flex items-center gap-2">
@@ -84,6 +90,7 @@ export function TripDetail({ trip }: { trip: TripRecord }) {
               Wander View
             </Button>
           </Link>
+          <LikeButton tripId={trip.id} initialLiked={trip.isLiked} initialCount={trip.likesCount} />
           <Button variant="outline" size="sm">
             <Edit className="w-4 h-4 mr-2" />
             Edit
@@ -140,6 +147,17 @@ export function TripDetail({ trip }: { trip: TripRecord }) {
             ))}
           </div>
         )}
+      </motion.div>
+
+      {/* Comments */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+        className="mt-8"
+      >
+        <h2 className="font-heading text-2xl font-bold text-text-primary mb-4">Comments</h2>
+        <CommentThread tripId={trip.id} tripOwnerId={trip.userId} />
       </motion.div>
     </div>
   );

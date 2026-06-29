@@ -78,6 +78,9 @@ export interface TripRecord {
   locations: TripLocationRecord[];
   media: TripMediaRecord[];
   coverPhoto: TripMediaRecord | null;
+  likesCount: number;
+  commentsCount: number;
+  isLiked: boolean;
 }
 
 // Lightweight shape returned by the list endpoint (no media included).
@@ -192,4 +195,20 @@ export async function updateMedia(
     body: JSON.stringify(input),
   });
   return unwrap<TripMediaRecord>(res);
+}
+
+export async function likeTrip(token: string, tripId: string): Promise<{ liked: boolean }> {
+  const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}/like`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return unwrap<{ liked: boolean }>(res);
+}
+
+export async function unlikeTrip(token: string, tripId: string): Promise<{ liked: boolean }> {
+  const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}/like`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return unwrap<{ liked: boolean }>(res);
 }
