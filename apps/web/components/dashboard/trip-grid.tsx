@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { MapPin, Calendar, Lock, Globe, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { TiltCard } from "@/components/ui/tilt-card";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import type { TripSummary } from "@/lib/trip-api";
@@ -42,6 +43,7 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
             transition={{ duration: 0.4, delay: index * 0.1 }}
           >
             <Link href={`/trips/${trip.id}`}>
+            <TiltCard maxTilt={6} liftScale={1.02}>
               <Card className="overflow-hidden group cursor-pointer p-0">
                 <div className="relative aspect-[4/3] overflow-hidden bg-secondary-100">
                   {cover ? (
@@ -104,6 +106,7 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
                   </div>
                 </div>
               </Card>
+            </TiltCard>
             </Link>
           </motion.div>
         );

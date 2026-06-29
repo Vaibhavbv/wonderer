@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { Compass, Instagram, Twitter, Github, Mail } from "lucide-react";
+import { GlowSurface } from "@/components/ui/glow-surface";
 
 export function Footer() {
   return (
-    <footer className="bg-secondary-900 text-white/80">
+    <GlowSurface as="footer" className="bg-secondary-900 text-white/80" glowColor="255, 122, 100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
@@ -67,6 +68,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>
+    </GlowSurface>
   );
 }
