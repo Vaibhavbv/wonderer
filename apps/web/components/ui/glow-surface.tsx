@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ElementType, type ReactNode } from "react";
+import { createElement, useRef, type ElementType, type ReactNode } from "react";
 
 /**
  * Dark-container wrapper that tracks the cursor and feeds its position to
@@ -32,19 +32,17 @@ export function GlowSurface({
     el.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
   }
 
-  return (
-    <Tag
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      className={`glow-surface${className ? ` ${className}` : ""}`}
-      style={
-        {
-          "--glow-color": glowColor,
-          "--glow-opacity": glowOpacity,
-        } as React.CSSProperties
-      }
-    >
-      {children}
-    </Tag>
+  return createElement(
+    Tag,
+    {
+      ref,
+      onMouseMove: handleMouseMove,
+      className: `glow-surface${className ? ` ${className}` : ""}`,
+      style: {
+        "--glow-color": glowColor,
+        "--glow-opacity": glowOpacity,
+      } as React.CSSProperties,
+    },
+    children
   );
 }

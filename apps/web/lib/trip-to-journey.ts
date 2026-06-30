@@ -20,6 +20,7 @@ function locationToDestination(loc: TripLocationRecord, media: TripMediaRecord[]
     memories: media.filter((m) => m.locationId === loc.id).length,
     vehicle: FALLBACK_VEHICLE,
     theme: loc.theme ?? FALLBACK_THEME,
+    coords: [loc.latitude, loc.longitude],
   };
 }
 

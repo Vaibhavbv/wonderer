@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Magnetic } from "@/components/ui/magnetic";
 import { TextReveal } from "@/components/ui/text-reveal";
 import { GlowSurface } from "@/components/ui/glow-surface";
+import { ParticleBackground } from "@/components/three/particle-background";
 import { SignInButton } from "@clerk/nextjs";
 
 export function CTASection() {
   return (
     <GlowSurface as="section" className="py-24 sm:py-32 bg-neutral-900" glowColor="232, 93, 76">
+      <ParticleBackground color="#e85d4c" count={180} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
