@@ -16,6 +16,7 @@
     "@mapbox/mapbox-gl-draw": "^1.5.0",
     "@stripe/react-stripe-js": "^3.1.1",
     "@stripe/stripe-js": "^5.5.0",
+    "@types/three": "^0.185.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.1",
@@ -26,6 +27,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.6.0",
+    "three": "^0.185.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
