@@ -50,7 +50,7 @@ apps/api/
 │   │   ├── interceptors/     transform.interceptor.ts (success envelope)
 │   │   └── utils/            slug.ts, theme-inference.ts
 │   │
-│   ├── config/               env.validation.ts (config classes; validate() is a no-op — debt)
+│   ├── config/               env.validation.ts (real boot-time env validation — WV-104)
 │   ├── prisma/               PrismaModule/Service (global)
 │   ├── redis/                RedisModule (⚠ currently unused)
 │   │
@@ -58,7 +58,7 @@ apps/api/
 │   ├── users/                profile CRUD, stats, subscription view, GDPR delete
 │   ├── trips/                CORE domain — CRUD, list/search, duplicate, stats, like
 │   ├── media/                S3 presign, quota, CRUD (⚠ delete/process TODOs)
-│   ├── stories/              per-trip story blob (⚠ untyped PUT body)
+│   ├── stories/              per-trip story blob (typed UpdateStoryDto — WV-108)
 │   ├── ai/                   BullMQ→OpenAI story/title gen + processor (⚠ partial)
 │   ├── maps/                 route/heatmap (real) + geocoding/styles (⚠ stubbed)
 │   ├── social/              discover/profiles (public) + feed/follow (guarded)
@@ -121,7 +121,6 @@ apps/web/
 │   ├── trips/                trip detail, like, comments
 │   ├── discover/             discover gallery, kinetic showcase
 │   ├── profile/              follow button, trip card
-│   ├── map/                  map-viewer.tsx (⚠ DEAD — imported nowhere)
 │   └── providers/            smooth-scroll (Lenis)
 │
 ├── lib/                      non-component shared code
@@ -136,7 +135,7 @@ apps/web/
 │   ├── utils.ts              cn(), date/format helpers, math helpers (some unused)
 │   └── *.spec.ts             vitest tests
 │
-├── public/                   static assets (incl. wander-demo.html — ⚠ legacy prototype)
+├── public/                   static assets (currently empty — legacy prototype removed in Phase 0)
 ├── middleware.ts             Clerk middleware (enabled only if CLERK_SECRET_KEY present)
 ├── next.config.ts            image hosts, optimizePackageImports, env re-export
 ├── vitest.config.ts / vitest.setup.ts

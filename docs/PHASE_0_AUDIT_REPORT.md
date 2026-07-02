@@ -1,5 +1,7 @@
 # Wanderverse — Phase 0 Audit Report
 
+> ⚠️ **HISTORICAL SNAPSHOT — SUPERSEDED.** This is the *mid-Phase-0* audit (2026-07-02, after docs+cleanup but **before** the security/correctness hardening pass). The gaps and scores below were subsequently addressed: WV-101/102/103/104/108/901 are **resolved** and the scores have moved (Production Readiness 55→70, overall ~72→~80). For the final state, read **[`PHASE_0_COMPLETION_REPORT.md`](./PHASE_0_COMPLETION_REPORT.md)**; for current debt status, [`17_TECH_DEBT.md`](./17_TECH_DEBT.md). Kept unedited below as the dated baseline record.
+
 **Date:** 2026-07-02 · **Scope:** repository foundation & AI-readiness (no features) · **Branch:** `phase-0/repo-foundation`
 
 This is the capstone deliverable for Phase 0. It summarizes the architecture audit, the cleanup performed, five health scores, and the recommendations to complete before Phase 1. Detail lives in the numbered `/docs` set — see [`00_README.md`](./00_README.md).

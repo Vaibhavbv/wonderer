@@ -9,32 +9,36 @@
 
 ## Phase 1 — Stabilization & Debt Paydown
 
-### WV-101 — Secure or remove `POST /v1/auth/sync`
+### WV-101 — Secure or remove `POST /v1/auth/sync`  ✅ DONE (Phase 0, ADR-011)
 - **Description:** The endpoint is unguarded; anyone can overwrite any user's profile by supplying a `clerkId`. Either guard it (and scope updates to the authenticated user) or delete it (the `ClerkAuthGuard` already auto-provisions users).
 - **Dependencies:** none.
 - **AC:** No unauthenticated caller can mutate another user's `email`/`displayName`/`avatarUrl`. Existing sign-in/provisioning still works.
 - **DoD:** + a test proving an unauthenticated/cross-user sync is rejected.
 - **Priority:** P0 · **Complexity:** S
+- **Resolution:** Guarded with `ClerkAuthGuard`; `clerkId` now derived from the verified JWT (`@CurrentUser('clerkId')`), removed from `SyncUserDto`. Confirmed no frontend caller exists.
 
-### WV-102 — Add ownership/privacy check to `TripsService.duplicateTrip`
+### WV-102 — Add ownership/privacy check to `TripsService.duplicateTrip`  ✅ DONE (Phase 0)
 - **Description:** `duplicateTrip` doesn't call the access check, so any authenticated user can duplicate any trip (including PRIVATE) by id. Add the same `getAccessibleTrip` gate used elsewhere.
 - **Dependencies:** none.
 - **AC:** Duplicating a trip the caller can't access returns 403/404; duplicating own/accessible trips still works.
 - **DoD:** + regression test.
 - **Priority:** P0 · **Complexity:** S
+- **Resolution:** `duplicateTrip` now calls `getAccessibleTrip(tripId, userId)` before cloning.
 
-### WV-103 — Stop masking DB errors as 409 conflicts
+### WV-103 — Stop masking DB errors as 409 conflicts  ✅ DONE (Phase 0, ADR-014)
 - **Description:** `likeTrip`, `comments.like`, `social.follow` (and similar) `catch` all errors and throw `ConflictException`. Narrow to `e.code === 'P2002'`; rethrow everything else.
 - **Dependencies:** none.
 - **AC:** A genuine unique-violation → 409; any other DB error → 500 (not masked).
 - **Priority:** P1 · **Complexity:** S
+- **Resolution:** All 3 sites check `Prisma.PrismaClientKnownRequestError && code === 'P2002'`; 3 spec tests updated to real P2002 + 3 new tests prove non-conflict errors propagate.
 
-### WV-104 — Make env validation actually validate
+### WV-104 — Make env validation actually validate  ✅ DONE (Phase 0, ADR-012)
 - **Description:** `env.validation.ts` `validate()` never runs `class-validator`. Wire `plainToInstance` + `validateSync` (or replace with a single flat schema) so missing required vars (`DATABASE_URL`, `CLERK_SECRET_KEY`) fail fast at boot.
 - **Dependencies:** none.
 - **AC:** Booting without a required var throws a clear error at startup, not lazily at first use.
 - **DoD:** + document required vs optional vars in [`13_DEPENDENCY_GUIDE.md`](./13_DEPENDENCY_GUIDE.md)/README.
 - **Priority:** P1 · **Complexity:** S
+- **Resolution:** Rewritten around a flat `EnvironmentVariables` class with real `plainToInstance` + `validateSync`; required vars fail fast at boot. Smoke-tested against compiled output.
 
 ### WV-105 — Consolidate the frontend API layer
 - **Description:** `API_URL` + `unwrap` + `authHeaders` are copy-pasted across `lib/api.ts`, `lib/trip-api.ts`, `lib/comments-api.ts`, `lib/notifications-api.ts`, plus a raw `fetch` in `follow-button.tsx`. Create one `lib/api-client.ts` (base URL, envelope unwrap, auth header, `ApiError`); refactor all callers through it; add typed wrappers for the follow/relationship endpoints.
@@ -54,11 +58,12 @@
 - **AC:** Deleting media removes the S3 object; trip counters still decrement correctly; failure to delete S3 doesn't corrupt DB state.
 - **Priority:** P2 · **Complexity:** S
 
-### WV-108 — Type the `stories` update DTO
+### WV-108 — Type the `stories` update DTO  ✅ DONE (Phase 0)
 - **Description:** `StoriesController.updateStory` takes `@Body() dto: any`, bypassing the global `ValidationPipe`. Define an `UpdateStoryDto` (blocks/template/theme) with `class-validator`.
 - **Dependencies:** none.
 - **AC:** Invalid story payloads are rejected; valid ones work as before.
 - **Priority:** P2 · **Complexity:** S
+- **Resolution:** Added `stories.dto.ts` (`UpdateStoryDto`); controller + service typed; Prisma JSON casts applied.
 
 ### WV-109 — Decide fate of empty stub modules & dead schema
 - **Description:** `payments`, `webhooks`, `analytics`, `exports` are `@Module({})`; `Session`, `Invoice`, `Export`, `UserActivity`, `MapTileCache`, `Challenge`, `ChallengeEntry` are unused. Decide per item: keep-as-scaffold (documented) or remove. Record in [`16_DECISIONS_LOG.md`](./16_DECISIONS_LOG.md).
@@ -66,11 +71,12 @@
 - **AC:** Each stub/model is explicitly "keep (planned in Phase X)" or removed via migration.
 - **Priority:** P2 · **Complexity:** M
 
-### WV-110 — Remove dead dependencies
+### WV-110 — Remove dead dependencies  ✅ DONE (Phase 0 cleanup)
 - **Description:** Remove confirmed-unused deps (see [`13_DEPENDENCY_GUIDE.md`](./13_DEPENDENCY_GUIDE.md)): frontend `gsap`, `zustand`, `@stripe/*`, `@mapbox/mapbox-gl-draw` (and `mapbox-gl`/`@types/mapbox-gl` if `MapViewer` is removed); backend `@nestjs/jwt`, `passport*`, `joi`, `zod`, `ms`, `mapbox-gl`, and others only after confirming non-use. Keep deps tied to *planned* phases only with a note.
 - **Dependencies:** WV-109 (some deps map to stub modules); coordinate with cleanup already done in Phase 0.
 - **AC:** `npm install` + build + tests pass; bundle shrinks; no runtime import errors.
 - **Priority:** P2 · **Complexity:** M
+- **Resolution:** 15 unused deps removed (`@stripe/*` deliberately kept for Phase 6). `@types/three` moved to devDeps. Build + all tests green.
 
 ### WV-111 — Promote `postprocessing` to a direct dependency
 - **Description:** `journey-scene.tsx` imports from `postprocessing`, which is only a transitive dep of `@react-three/postprocessing`. Add it explicitly to `apps/web/package.json`.
@@ -166,11 +172,12 @@
 
 ## Phase 9 — Scale & Observability
 
-### WV-901 — Enforce rate limiting
+### WV-901 — Enforce rate limiting  ✅ DONE (Phase 0, ADR-013)
 - **Description:** `ThrottlerModule` is configured but no `ThrottlerGuard` is applied. Apply it (global `APP_GUARD` or per-route).
 - **Dependencies:** none.
 - **AC:** Configured limits are enforced; abusive clients throttled.
 - **Priority:** P2 · **Complexity:** S
+- **Resolution:** `ThrottlerGuard` provided globally via `APP_GUARD`; `@SkipThrottle()` on health/readiness probes. Pulled forward into Phase 0 hardening. *(Per-route throttle profiles remain a Phase 9 refinement — WV-903.)*
 
 ### WV-902 — Media processing (thumbnails/variants)
 - **Description:** Generate image variants/thumbnails on upload (using `sharp`, present but unused); populate `Media.variants`; serve responsive images.

@@ -18,7 +18,7 @@ Auth = Clerk (stateless JWT per request). Response envelope everywhere = `{ succ
 
 ## Current phase
 
-**Phase 0 — Repository Foundation (documentation + cleanup only).** No features, no redesign, no new Three.js, no new animations. See [`07_ROADMAP.md`](./07_ROADMAP.md). If the user asks for Phase 1+ work, that's fine — but know that as of this doc set the codebase is in "prepare for scale," not "ship features," mode.
+**Phase 0 (repository foundation: docs + cleanup + hardening) is ✅ COMPLETE.** Phase 1 (stabilization & debt paydown) is next but **has not been kicked off** — don't start it without explicit user instruction. Always confirm the live state in [`15_PHASE_STATUS.md`](./15_PHASE_STATUS.md); the phase plan is [`07_ROADMAP.md`](./07_ROADMAP.md).
 
 ---
 
@@ -61,21 +61,25 @@ The database schema and enums describe a **much more ambitious product than what
 
 **Unreachable enum values:** `AIJobType.{GENERATE_CAPTIONS, AUTO_LAYOUT, TRANSLATE, VOICE_NARRATE, RECONSTRUCT_ROUTE}` (no endpoint, no processor case).
 
-**Dependencies present but unused:** frontend — `gsap`, `zustand`, `@stripe/*`, `@mapbox/mapbox-gl-draw`, effectively `mapbox-gl`. Backend — `stripe`, `svix`, `sharp`, `@nestjs/jwt`, `passport*`, `@nestjs/websockets`, `joi`, `zod`, `ms`, `mapbox-gl`, and more. (Full list: [`13_DEPENDENCY_GUIDE.md`](./13_DEPENDENCY_GUIDE.md).)
+**Dependencies present but unused:** the clearly-dead ones were **removed in Phase 0 cleanup** (frontend: `gsap`, `zustand`, `@mapbox/mapbox-gl-draw`, `mapbox-gl`; backend: `@nestjs/jwt`, `passport*`, `joi`, `zod`, `ms`, `@nestjs/axios`, `@nestjs/mapped-types`, `mapbox-gl`). Deliberately **kept as planned-phase scaffolding**: frontend `@stripe/*`; backend `stripe`, `svix`, `sharp`, `@nestjs/websockets`. (Full list + rationale: [`13_DEPENDENCY_GUIDE.md`](./13_DEPENDENCY_GUIDE.md).)
 
 ➡️ **Before building on any capability, verify it's real** by reading the actual service/component, not the schema. If it's a stub, treat implementing it as net-new work and check the roadmap/backlog.
 
 ---
 
-## Known security / correctness gaps (don't build on these; fix deliberately)
+## Known security / correctness gaps
 
-- `POST /v1/auth/sync` is **unguarded** — anyone can overwrite any user's profile by `clerkId`. Don't rely on it.
-- `TripsService.duplicateTrip` skips the privacy/ownership check — any user can duplicate any trip by id.
-- Several `catch` blocks assume "unique violation" and mask real DB errors as 409s.
-- `env.validation.ts`'s `validate()` **does not actually validate** — missing required env vars won't fail at boot.
-- No Clerk webhook → Clerk-side profile/email/delete changes never sync to the DB.
+**✅ Resolved in Phase 0 (hardening pass — see [`16_DECISIONS_LOG.md`](./16_DECISIONS_LOG.md) ADR-011..014):**
+- ~~`POST /v1/auth/sync` is unguarded~~ → now guarded by `ClerkAuthGuard`; `clerkId` comes from the verified JWT, not the body (WV-101).
+- ~~`TripsService.duplicateTrip` skips the access check~~ → now runs `getAccessibleTrip` first (WV-102).
+- ~~`catch` blocks mask real DB errors as 409s~~ → now check Prisma `P2002` specifically; other errors propagate (WV-103).
+- ~~`env.validation.ts` doesn't actually validate~~ → now runs `class-validator`; missing required vars fail fast at boot (WV-104).
 
-These are catalogued with fixes in [`17_TECH_DEBT.md`](./17_TECH_DEBT.md).
+**⚠️ Still open (deliberately deferred — don't build on these yet):**
+- **No Clerk webhook** → Clerk-side profile/email/delete changes never sync to the DB (WV-201, Phase 2).
+- **`media` delete leaks the S3 object** (WV-107) — DB row removed, S3 object orphaned.
+
+Full ledger with current status: [`17_TECH_DEBT.md`](./17_TECH_DEBT.md).
 
 ---
 
@@ -157,7 +161,7 @@ Full map: [`09_FOLDER_STRUCTURE.md`](./09_FOLDER_STRUCTURE.md).
 3. **Changing the response envelope** and breaking every `unwrap()` call.
 4. **Adding a 5th copy** of `API_URL`/`unwrap`/`authHeaders` instead of consolidating (there are already 4 + one ad-hoc `fetch`).
 5. **Importing `journey-scene` without `ssr:false`** → SSR crash.
-6. **Introducing a new animation library** (GSAP is already dead weight) — use Framer Motion + R3F, which are the real stack.
+6. **Introducing a new animation library** (GSAP was removed in Phase 0 cleanup) — use Framer Motion + R3F, which are the real stack.
 7. **Adding a second brand accent color** or breaking the serif/sans system — violates the design law.
 8. **Building on Mapbox** for maps — the app renders geography with R3F globes; Mapbox is effectively unused.
 9. **Forgetting reduced-motion** paths on animated components.

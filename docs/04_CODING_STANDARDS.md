@@ -58,7 +58,7 @@
 ## TypeScript standards
 
 - **Strict mode is on** (both apps). Do not weaken `tsconfig`.
-- **No `any`.** The one existing offender (`stories` `updateStory(dto: any)`) is tech debt, not a pattern to copy. Type request bodies with DTO classes (backend) or explicit types (frontend).
+- **No `any`.** The mutation surface is fully typed (the former `stories` `updateStory(dto: any)` offender was fixed in Phase 0 — WV-108). Type request bodies with DTO classes (backend) or explicit types (frontend).
 - Prefer **`interface` for object shapes**, `type` for unions/utility types (loose convention; match the file).
 - Export shared types from `lib/` (frontend) or the DTO/`.dto.ts` file (backend). Types used by both server & client components can live in the relevant `lib/*.ts`.
 - Use Prisma's generated types on the backend rather than hand-redeclaring model shapes.

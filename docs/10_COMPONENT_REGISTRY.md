@@ -110,11 +110,9 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 
 ---
 
-## `components/map/` — ⚠ DEAD
+## `components/map/` — ✅ REMOVED (Phase 0 cleanup)
 
-| Component | Purpose | Status |
-|---|---|---|
-| `MapViewer` (`map-viewer.tsx`) | Full Mapbox GL wrapper (markers, route, camera) | **Imported nowhere.** The app renders geography with R3F globes, not Mapbox. Removal candidate → also frees `mapbox-gl`/`@types/mapbox-gl`. Also missing `"use client"`. See [`17_TECH_DEBT.md`](./17_TECH_DEBT.md). |
+The dead `MapViewer` component (a full Mapbox GL wrapper, imported nowhere) and its `components/map/` folder were **removed in Phase 0 cleanup**, along with the `mapbox-gl`/`@types/mapbox-gl` dependencies it held hostage. The app renders geography with R3F globes (`components/three/`). If a 2D map is ever needed again, build it fresh against the then-current requirements — don't resurrect the old file from git history without review.
 
 ---
 

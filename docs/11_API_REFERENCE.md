@@ -10,7 +10,8 @@
 ## Conventions
 - **Auth:** `Authorization: Bearer <clerk-jwt>`. `request.user.id` is the **DB cuid**, not the Clerk id.
 - **Pagination (list endpoints):** query `cursor`, `per_page`, `sort`; response `meta` carries `total` / `nextCursor` (and `unreadCount` for notifications).
-- **Validation:** DTO + `class-validator`, enforced by global `ValidationPipe` (`whitelist` + `forbidNonWhitelisted`). Exception: `stories` PUT is untyped (`any`) — debt.
+- **Validation:** DTO + `class-validator`, enforced by global `ValidationPipe` (`whitelist` + `forbidNonWhitelisted`). Every mutation body is now typed (the former `stories` PUT `any` was fixed — WV-108).
+- **Rate limiting:** enforced globally via `ThrottlerGuard` ('short' 100/min, 'long' 1000/hr); `/health` + `/ready` exempted (WV-901, ADR-013).
 - **Error codes** are `snake_case`.
 
 ---
@@ -26,10 +27,10 @@
 ## Auth — `/v1/auth`  ⚠️ (thin; mostly superseded by the guard)
 | Method | Path | Auth | Purpose | Status |
 |---|---|---|---|---|
-| POST | `/v1/auth/sync` | 🌐 **(⚠ should be 🔒)** | Upsert `User` by `clerkId`. Body `SyncUserDto {clerkId, email, displayName?, username?, avatarUrl?}` | ⚠️ **security gap** — unguarded, can overwrite any user (WV-101) |
-| GET | `/v1/auth/me` | 🌐 | Stub — returns `{message:'Use /v1/users/me'}` | ⚠️ dead |
+| POST | `/v1/auth/sync` | 🔒 | Upsert the **authenticated** user's profile fields. Body `SyncUserDto {email, displayName?, username?, avatarUrl?}`. `clerkId` is taken from the verified JWT, **not** the body. | ✅ (guarded — WV-101 resolved, ADR-011) |
+| GET | `/v1/auth/me` | 🔒 | Stub — returns `{message:'Use /v1/users/me'}` | ⚠️ dead (removal candidate, tech-debt #25) |
 
-> Real user provisioning happens automatically inside `ClerkAuthGuard`. Prefer `PATCH /v1/users/me` for profile edits.
+> Real user provisioning happens automatically inside `ClerkAuthGuard`. Prefer `PATCH /v1/users/me` for profile edits. Both `auth/*` routes are now guarded.
 
 ---
 
@@ -54,7 +55,7 @@ All ✅. Note: subscription fields are **read-only** — nothing writes them (pa
 | GET | `/v1/trips/:id` | Full trip (locations, coverPhoto, media, collaborators, `isLiked`) | — | trip | ✅ (403 if private & not owner) |
 | PATCH | `/v1/trips/:id` | Update | `UpdateTripDto` | trip | ✅ (owner or non-VIEWER collaborator) |
 | DELETE | `/v1/trips/:id` | Delete | — | 204 | ✅ (owner only) |
-| POST | `/v1/trips/:id/duplicate` | Clone as new PRIVATE trip | — | trip | ⚠️ **no access check** — any user can duplicate any trip by id (WV-102) |
+| POST | `/v1/trips/:id/duplicate` | Clone as new PRIVATE trip | — | trip | ✅ access-checked (`getAccessibleTrip`) — WV-102 resolved |
 | GET | `/v1/trips/:id/stats` | Trip stats | — | counts (photos/videos/storyBlocks/views/likes/comments, locationsCount, totalMediaSize) | ✅ (owner only) |
 | POST | `/v1/trips/:id/like` | Like | — | 201 | ✅ (409 if already liked; notifies owner) |
 | DELETE | `/v1/trips/:id/like` | Unlike | — | 200 | ✅ |
@@ -65,7 +66,7 @@ All ✅. Note: subscription fields are **read-only** — nothing writes them (pa
 | Method | Path | Purpose | Input | Output | Status |
 |---|---|---|---|---|---|
 | GET | `/v1/trips/:tripId/story` | Get (lazily creates default) | — | story | ✅ |
-| PUT | `/v1/trips/:tripId/story` | Full replace | `any` (⚠ untyped — WV-108) | story | ⚠️ (owner/non-VIEWER collaborator) |
+| PUT | `/v1/trips/:tripId/story` | Full replace | `UpdateStoryDto {template?, theme?, blocks}` (✅ typed — WV-108) | story | ✅ (owner/non-VIEWER collaborator) |
 
 ---
 
@@ -157,5 +158,5 @@ Poll `GET /v1/ai/jobs/:id` for async results. Enum job types `GENERATE_CAPTIONS/
 - Consolidate hand-rolled pagination into one helper (WV-106).
 - Add the missing typed wrappers on the frontend for follow/relationship (WV-105).
 - Version bump strategy for breaking changes (currently only `v1`) — see [`14_GIT_WORKFLOW.md`](./14_GIT_WORKFLOW.md) versioning.
-- Rate limiting is configured but not enforced (WV-901).
+- Per-route throttle profiles (stricter on `POST /v1/ai/*`, looser on public reads) — global throttling is now enforced (WV-901); per-route tuning is a Phase 9 refinement (WV-903).
 - Consider consistent 404-vs-403 semantics for private resources (avoid leaking existence).

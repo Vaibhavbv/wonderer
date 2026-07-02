@@ -9,15 +9,17 @@ This `docs/` set is the **canonical, AI-first documentation** for the repository
 ## 🤖 If you are an AI assistant: read these two first
 1. **[`05_AI_CONTEXT.md`](./05_AI_CONTEXT.md)** — everything you must know before writing code (⭐ start here).
 2. **[`15_PHASE_STATUS.md`](./15_PHASE_STATUS.md)** — what's happening *right now* (📍 live status).
+3. **[`00_SESSION_CONTEXT.md`](./00_SESSION_CONTEXT.md)** — the session-by-session narrative of how the repo got here.
 
 Then read whatever the task needs from the index below.
 
 ---
 
-## The numbered set (01–20)
+## The numbered set (00–20)
 
 | # | Doc | What it's for |
 |---|---|---|
+| 00 | [Session Context](./00_SESSION_CONTEXT.md) | Chronological handoff log of each working session |
 | 01 | [Project Overview](./01_PROJECT_OVERVIEW.md) | What Wanderverse is, vision, audience, current features vs. future |
 | 02 | [Architecture](./02_ARCHITECTURE.md) | System map, data flow, frontend/backend/auth/API/DB architecture |
 | 03 | [Codebase Guide](./03_CODEBASE_GUIDE.md) | Where things live; what must never be modified casually |
@@ -39,6 +41,10 @@ Then read whatever the task needs from the index below.
 | 19 | [Prompt Guide](./19_PROMPT_GUIDE.md) | How to work on this repo with AI; prompt templates |
 | 20 | [Changelog](./20_CHANGELOG.md) | Notable changes, milestones, version history |
 
+## Phase reports
+- [PHASE_0_COMPLETION_REPORT.md](./PHASE_0_COMPLETION_REPORT.md) ✅ — final Phase 0 report (accomplishments, status, remaining debt, Phase 1 readiness)
+- [PHASE_0_AUDIT_REPORT.md](./PHASE_0_AUDIT_REPORT.md) — superseded mid-phase baseline snapshot (kept as the dated record)
+
 ## Strategic source docs (preserved)
 The founder's original material — kept as reference. **For product *intent*, [`MASTERPLAN.md`](./MASTERPLAN.md) is authoritative;** for *current code state*, the numbered docs win (they're audited against the code).
 
@@ -50,7 +56,7 @@ The founder's original material — kept as reference. **For product *intent*, [
 - **Monorepo:** `apps/web` (Next.js 15 / React 19 / Tailwind v4 / R3F / Framer Motion) + `apps/api` (NestJS 10 / Prisma 6 / Postgres / Redis+BullMQ / Clerk / S3 / OpenAI).
 - **Auth:** Clerk (stateless JWT per request). **API:** REST, versioned `/v1`, envelope `{success,data,meta,error}`.
 - **Run:** `cd apps/web && npm install && npm run dev` (:3000); `cd apps/api && npm install && npm run start:dev` (:3001, needs Postgres+Redis).
-- **Current phase:** Phase 0 — repository foundation (docs + cleanup, no features).
+- **Current phase:** Phase 0 ✅ complete — Phase 1 (stabilization) next, awaiting kickoff. Always confirm in [`15_PHASE_STATUS.md`](./15_PHASE_STATUS.md).
 
 ⚠️ **Golden gotcha:** a model/enum/dependency existing does **not** mean the feature is built. Verify against [`17_TECH_DEBT.md`](./17_TECH_DEBT.md) / [`05_AI_CONTEXT.md`](./05_AI_CONTEXT.md) before building on any capability.
 

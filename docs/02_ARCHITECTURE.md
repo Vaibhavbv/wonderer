@@ -149,8 +149,8 @@ Global setup applied to every request:
 
 ### 5.2 Root module (`src/app.module.ts`)
 Registers global infra + all feature modules:
-- `ConfigModule` (global, loads `.env.local`/`.env`, runs `validate` — **note: `validate` currently does no real validation**, see [`16_DECISIONS_LOG.md`](./16_DECISIONS_LOG.md) / [`17_TECH_DEBT.md`](./17_TECH_DEBT.md)).
-- `EventEmitterModule`, `ThrottlerModule`, `ScheduleModule`, `BullModule` — **all registered but none actively used** (no `@OnEvent`, no `ThrottlerGuard` applied, no `@Cron`; BullMQ *is* used but its connection is configured here directly from `process.env`, duplicating `RedisModule`).
+- `ConfigModule` (global, loads `.env.local`/`.env`, runs `validate` — now performs **real `class-validator` validation**; missing required vars fail fast at boot (WV-104, ADR-012)).
+- `ThrottlerModule` — **enforced** via a global `ThrottlerGuard` (WV-901, ADR-013). `EventEmitterModule`, `ScheduleModule` — registered but still without consumers (no `@OnEvent`/`@Cron`). `BullModule` *is* used, but its connection is configured here directly from `process.env`, duplicating `RedisModule` (see tech-debt #17).
 - Feature modules (see below).
 
 ### 5.3 Module map
@@ -159,11 +159,11 @@ Registers global infra + all feature modules:
 |---|---|---|
 | `prisma` | ✅ | Global `PrismaService` (extends `PrismaClient`), lifecycle connect/disconnect. |
 | `redis` | ⚠️ dead | Provides an `ioredis` client (`REDIS_CLIENT`) with **zero consumers**. |
-| `auth` | ⚠️ thin | `POST /v1/auth/sync` (unguarded — security risk), `GET /v1/auth/me` (stub). Mostly superseded by the guard's auto-provisioning. |
+| `auth` | ✅ thin | `POST /v1/auth/sync` (now guarded — WV-101), `GET /v1/auth/me` (stub). Mostly superseded by the guard's auto-provisioning. |
 | `users` | ✅ | Profile CRUD, stats, subscription view (read-only), GDPR delete. |
 | `trips` | ✅ | Core domain: CRUD, list/search/paginate, duplicate, stats, like. |
 | `media` | ⚠️ partial | S3 presign, quota, CRUD. **TODO:** S3 delete not implemented; `/process` is a no-op. |
-| `stories` | ✅ | Per-trip story JSON blob (get/replace). `updateStory` uses untyped `any` body. |
+| `stories` | ✅ | Per-trip story JSON blob (get/replace). `updateStory` takes a typed `UpdateStoryDto` (WV-108). |
 | `ai` | ⚠️ partial | Story/title gen via BullMQ→OpenAI. Photo-enhance is a placeholder; 4 job types unreachable. |
 | `maps` | ⚠️ stub-heavy | Route/heatmap are real (haversine). Geocoding returns `[]` (placeholder). Styles hardcoded. |
 | `social` | ✅ | Public discover/profiles + guarded feed/follow. Two controllers in one file (public vs guarded). |
@@ -174,7 +174,7 @@ Registers global infra + all feature modules:
 | `analytics` | ❌ empty | `@Module({})`. `UserActivity` never written. |
 | `exports` | ❌ empty | `@Module({})`. No PDF/MP4/JSON export. |
 | `common` | ✅ | Cross-cutting: guards, decorators, filters, interceptors, utils. |
-| `config` | ⚠️ | Env config classes (but `validate()` is a no-op). |
+| `config` | ✅ | `EnvironmentVariables` class; `validate()` enforces required vars at boot (WV-104). |
 
 Legend: ✅ built · ⚠️ partial/has debt · ❌ empty stub.
 
@@ -212,7 +212,7 @@ Auth is **fully delegated to Clerk**; the API is a stateless JWT verifier.
 **Important nuances an AI assistant must know:**
 - `request.user.id` is the **database cuid**, *not* the Clerk id. Use `@CurrentUser('id')` for ownership checks.
 - There is **no webhook sync** (WebhooksModule is empty). Clerk-side profile edits/deletes do **not** propagate to the DB automatically.
-- `POST /v1/auth/sync` is **unguarded** and can overwrite any user's profile by `clerkId` — a real security gap flagged in [`17_TECH_DEBT.md`](./17_TECH_DEBT.md). Do not build on it; prefer the guard's provisioning + `PATCH /v1/users/me`.
+- `POST /v1/auth/sync` is **now guarded** (WV-101, ADR-011); it derives `clerkId` from the verified JWT, so it can only sync the caller's own profile. Prefer the guard's provisioning + `PATCH /v1/users/me` for routine edits.
 - Frontend `middleware.ts` only enables Clerk when `CLERK_SECRET_KEY` is present, so the public marketing site boots even without auth configured.
 
 See the auth section of [`11_API_REFERENCE.md`](./11_API_REFERENCE.md) for guard-by-endpoint detail.
@@ -223,7 +223,7 @@ See the auth section of [`11_API_REFERENCE.md`](./11_API_REFERENCE.md) for guard
 
 - **Base:** `/v1` (URI versioning). Local dev: `http://localhost:3001`.
 - **Auth:** most routes require `ClerkAuthGuard`; public routes are `GET /health`, `GET /ready`, the `auth/*` endpoints, and the `social` discover/profile reads.
-- **Validation:** DTO classes + `class-validator`, enforced by the global `ValidationPipe`. (Exception: `stories` `PUT` takes untyped `any`.)
+- **Validation:** DTO classes + `class-validator`, enforced by the global `ValidationPipe`. Every mutation body is typed (WV-108 closed the last exception).
 - **Pagination:** cursor-based, via the `@Pagination()` decorator + per-service hand-rolled `take/skip/cursor` (duplicated across services — see tech debt).
 - **Docs:** Swagger/OpenAPI auto-generated at `/v1/docs`.
 

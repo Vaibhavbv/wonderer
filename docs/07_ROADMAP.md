@@ -22,12 +22,13 @@
 **Goal:** Fix the correctness/security gaps and duplication surfaced in Phase 0 so later features build on solid ground.
 
 - **Milestones:**
-  - Secure/remove `POST /v1/auth/sync`; add ownership check to `duplicateTrip`; fix error-masking `catch` blocks.
-  - Make `env.validation.ts` actually validate; fail fast on missing required vars.
-  - Consolidate the frontend API layer into one client (kill the 4× `unwrap`/`API_URL` duplication + the ad-hoc `follow-button` fetch).
-  - Extract shared backend pagination + sort-map utilities.
-  - Implement real S3 deletion on media delete; type the `stories` `PUT` DTO.
-  - Decide the fate of empty stub modules & dead schema (remove or ticket) — see [`16_DECISIONS_LOG.md`](./16_DECISIONS_LOG.md).
+  - ✅ ~~Secure/remove `POST /v1/auth/sync`; add ownership check to `duplicateTrip`; fix error-masking `catch` blocks.~~ *(Pulled forward — done in Phase 0 hardening: WV-101/102/103.)*
+  - ✅ ~~Make `env.validation.ts` actually validate; fail fast on missing required vars.~~ *(Done in Phase 0: WV-104.)*
+  - ✅ ~~Type the `stories` `PUT` DTO.~~ *(Done in Phase 0: WV-108. Rate limiting also enforced: WV-901.)*
+  - Consolidate the frontend API layer into one client (kill the 4× `unwrap`/`API_URL` duplication + the ad-hoc `follow-button` fetch) — WV-105.
+  - Extract shared backend pagination + sort-map utilities — WV-106.
+  - Implement real S3 deletion on media delete — WV-107.
+  - Decide the fate of empty stub modules & dead schema (remove or ticket) — WV-109, see [`16_DECISIONS_LOG.md`](./16_DECISIONS_LOG.md).
 - **Dependencies:** Phase 0.
 - **Deliverables:** hardened API; unified frontend client; green test suite with added coverage for the fixed paths.
 - **Completion criteria:** all [`17_TECH_DEBT.md`](./17_TECH_DEBT.md) "correctness/security" items resolved or explicitly deferred with a decision entry; no behavior regressions.

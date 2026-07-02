@@ -4,10 +4,11 @@
 
 ---
 
-**Last updated:** 2026-07-02
-**Current phase:** **Phase 0 — Repository Foundation & AI-Readiness — COMPLETE, awaiting sign-off**
+**Last updated:** 2026-07-03
+**Current phase:** **Phase 0 — Repository Foundation & AI-Readiness — ✅ COMPLETE (final verification passed)**
 **Release line:** V2 (`v2` branch exists on origin)
 **Working branch for this effort:** `phase-0/repo-foundation`
+**Completion report:** [`PHASE_0_COMPLETION_REPORT.md`](./PHASE_0_COMPLETION_REPORT.md)
 
 ---
 
@@ -34,12 +35,19 @@ Full plan: [`07_ROADMAP.md`](./07_ROADMAP.md).
   - **WV-901** — `ThrottlerGuard` is now applied globally via `APP_GUARD` in `app.module.ts`, so the already-configured rate limits ('short' 100/min, 'long' 1000/hr) are actually enforced. Health/readiness probes (`AppController`) are exempted with `@SkipThrottle()` so infra monitoring isn't rate-limited.
   - **Verified:** backend `nest build` ✓, **56/56** backend tests ✓ (53 existing + 3 new), frontend 40/40 tests ✓ (unaffected, sanity-checked). No functionality changed beyond the fixes themselves.
 - **App confirmed running locally** — frontend dev server boots (Next.js on :3000). Backend compiles + unit tests pass; running it needs Postgres + Redis (via `infra/docker-compose.yml` or native installs).
+- **Final Phase 0 verification (session 3)** — full re-verification pass:
+  - Backend `nest build` ✓ · 56/56 tests ✓. Frontend `type-check` ✓ · 40/40 tests ✓ · production `build` ✓ (all routes compile).
+  - All 6 hardening fixes confirmed present in committed code (grep-verified: guard on `auth/sync`, `getAccessibleTrip` in `duplicateTrip`, `P2002` checks ×3, `plainToInstance`+`validateSync`, `UpdateStoryDto`, global `ThrottlerGuard` + `@SkipThrottle` on health).
+  - Cleanup completeness confirmed: `MapViewer`/`components/map/`/`wander-demo.html` gone; zero removed deps lingering in either `package.json`.
+  - Folder structure matches [`09_FOLDER_STRUCTURE.md`](./09_FOLDER_STRUCTURE.md) exactly (18 backend modules, 10 frontend component groups).
+  - **Fixed the one blocking issue found:** documentation internal inconsistency — `05_AI_CONTEXT`, `17_TECH_DEBT`, `11_API_REFERENCE`, `02_ARCHITECTURE`, `03_CODEBASE_GUIDE`, `04_CODING_STANDARDS`, `07_ROADMAP`, `08_ENGINEERING_BACKLOG`, `09_FOLDER_STRUCTURE`, `10_COMPONENT_REGISTRY`, `13_DEPENDENCY_GUIDE` still described WV-101/102/103/104/108/901 (and the removed dead code/deps) as *open*, contradicting the code and this file. All reconciled to resolved status; `PHASE_0_AUDIT_REPORT.md` marked as a superseded historical snapshot. No source code changed.
+- **Phase 0 Completion Report** published: [`PHASE_0_COMPLETION_REPORT.md`](./PHASE_0_COMPLETION_REPORT.md).
 
 ---
 
 ## In Progress 🔄
 
-None — Phase 0 deliverables are complete. Awaiting explicit sign-off / Phase 1 kickoff from the user.
+None — **Phase 0 is COMPLETE and verified.** Awaiting explicit Phase 1 kickoff from the user.
 
 ---
 
@@ -52,16 +60,17 @@ None — Phase 0 deliverables are complete. Awaiting explicit sign-off / Phase 1
 
 ## Next Tasks ⏭️
 
-**Phase 0 is complete.** Remaining before Phase 1 formally opens:
+**Phase 0 is COMPLETE — nothing remains in scope.** The only step left is outside the repo:
 1. Human review/merge of `phase-0/repo-foundation` into `main`/`v2`.
-2. Note: [`17_TECH_DEBT.md`](./17_TECH_DEBT.md), [`08_ENGINEERING_BACKLOG.md`](./08_ENGINEERING_BACKLOG.md), and [`PHASE_0_AUDIT_REPORT.md`](./PHASE_0_AUDIT_REPORT.md) still describe WV-101/102/103/104/108/901 as *open* — they were intentionally left unedited this session (only 15/16/20 + this file were in scope) and should be refreshed to "resolved" in the next documentation pass so they don't mislead a future session.
 
 **Do NOT start Phase 1 until the user explicitly says so.**
 
-**When Phase 1 begins**, the remaining opening tickets (not touched this session — out of scope: frontend/UI or requires a stakeholder decision) are:
-- WV-105 (consolidate frontend API client — frontend `lib/` code, deferred to respect "no UI" scope this session)
-- WV-109 (decide keep/remove for empty stub modules & dead schema — needs a product decision + migrations, not a code fix)
-- WV-107 (S3 object deletion on media delete — not flagged as a Phase-0-blocking item in the audit's recommendations)
+**When Phase 1 begins**, the opening tickets are (see [`08_ENGINEERING_BACKLOG.md`](./08_ENGINEERING_BACKLOG.md)):
+- WV-105 (consolidate frontend API client)
+- WV-106 (shared backend pagination/sort utilities)
+- WV-107 (S3 object deletion on media delete)
+- WV-109 (decide keep/remove for empty stub modules & dead schema — needs a product decision + migrations)
+- WV-111 (promote `postprocessing` to a direct dependency)
 
 ---
 
@@ -69,8 +78,8 @@ None — Phase 0 deliverables are complete. Awaiting explicit sign-off / Phase 1
 
 | Phase | Theme | Status |
 |---|---|---|
-| **0** | Repo foundation & AI-readiness | 🔄 current |
-| 1 | Stabilization & debt paydown | ⏭ next |
+| **0** | Repo foundation & AI-readiness | ✅ **complete** |
+| 1 | Stabilization & debt paydown | ⏭ next (awaiting kickoff) |
 | 2 | Identity layer polish (profiles/feed/webhook sync) | planned |
 | 3 | Signature profile map (growing route + replay + passport) | planned |
 | 4 | Viral loop (reshare + Save to Bucket List) | planned |

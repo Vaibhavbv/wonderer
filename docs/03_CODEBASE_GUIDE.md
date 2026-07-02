@@ -31,7 +31,7 @@ No root workspace. Each has its own `package.json`, `node_modules`, lockfile, an
 | `components/profile/` | FollowButton, TripCard | |
 | `components/providers/` | SmoothScroll (Lenis) | Effect-only, `null` render. |
 | `lib/` | API clients, hooks, data, utils, types | See below. |
-| `public/` | Static assets | Contains `wander-demo.html` (legacy prototype — see [`17_TECH_DEBT.md`](./17_TECH_DEBT.md)). |
+| `public/` | Static assets | Currently empty (the legacy `wander-demo.html` prototype was removed in Phase 0 cleanup). |
 
 ### Important components (start here)
 - **`components/journey/journey-experience.tsx`** — orchestrator of the signature experience. Scroll state, active-destination tracking, dynamic WebGL import, reduced-motion fallback. High blast radius.
@@ -73,7 +73,7 @@ No root workspace. Each has its own `package.json`, `node_modules`, lockfile, an
 |---|---|
 | `src/<feature>/` | One folder per domain (auth, users, trips, media, stories, ai, maps, social, comments, notifications). Each has `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.dto.ts`. |
 | `src/common/` | Cross-cutting: guards, decorators, filters, interceptors, utils. **Touch with care.** |
-| `src/config/` | `env.validation.ts` (config classes; `validate()` is currently a no-op). |
+| `src/config/` | `env.validation.ts` (`EnvironmentVariables` class; `validate()` runs real `class-validator` at boot — WV-104). |
 | `src/prisma/` | Global `PrismaService`. |
 | `src/redis/` | `RedisModule` (currently unused — see debt). |
 | `prisma/` | `schema.prisma`, `migrations/`, `seed.ts`. |

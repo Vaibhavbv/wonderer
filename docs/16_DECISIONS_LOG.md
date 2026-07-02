@@ -117,4 +117,11 @@ Entries **ADR-000..ADR-008** are *reconstructed* from the audited codebase (they
 - **Tradeoffs:** ➖ touches test files beyond the literal "fix identified issues" instruction's narrowest reading. ➕ leaving them as-is would mean either the fix breaks 3 passing tests (regressing coverage) or the tests silently keep validating the wrong contract — neither is acceptable for a correctness fix.
 - **Future:** None — this is now the correct, permanent behavior to test against.
 
-*(Add ADR-015+ below as decisions are made.)*
+### ADR-015 — Treat stale documentation as the blocking issue in final Phase 0 verification; reconcile live docs, banner historical ones
+- **Date:** 2026-07-03 · **Status:** Accepted
+- **Context:** The final Phase 0 verification pass found code, build, tests, cleanup, and folder structure all green — but the documentation was internally inconsistent: the mandated first-read docs (`05_AI_CONTEXT.md`) and reference docs (`17_TECH_DEBT`, `11_API_REFERENCE`, `02_ARCHITECTURE`, `13_DEPENDENCY_GUIDE`, `08_ENGINEERING_BACKLOG`, etc.) still described the WV-101/102/103/104/108/901 fixes and the executed cleanup as *open problems*. Since this doc set exists precisely so AI sessions can trust it without re-auditing, docs asserting false security gaps as current truth is a **blocking** consistency defect, not cosmetic drift.
+- **Decision:** Reconcile every *live reference* doc to the actual code state (strike-through + "✅ resolved (Phase 0, WV-###/ADR-###)" markers, preserving the original problem descriptions for context). Leave *historical/dated* documents (`20_CHANGELOG.md` entries, `00_SESSION_CONTEXT.md`, the score tables) unedited as records, and mark `PHASE_0_AUDIT_REPORT.md` with a "superseded historical snapshot" banner pointing to the new `PHASE_0_COMPLETION_REPORT.md` rather than rewriting its body.
+- **Tradeoffs:** ➖ touched 11 docs in one pass (broad diff for a "verification" session) — but every edit is a status marker, zero source code changed. ➕ restores the core guarantee of the doc system (docs = truth); establishes the convention that fix-status is updated in *all* referencing docs at fix time, not deferred.
+- **Future:** When resolving a ticket, update every doc that references it in the same change (the "update the docs you invalidate" rule in [`05_AI_CONTEXT.md`](./05_AI_CONTEXT.md)) — this session's reconciliation debt existed because session 2 was scoped to only 4 named files.
+
+*(Add ADR-016+ below as decisions are made.)*
