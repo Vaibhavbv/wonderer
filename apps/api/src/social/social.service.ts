@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -121,7 +122,10 @@ export class SocialService {
         data: { followerId, followingId: target.id },
       });
     } catch (e) {
-      throw new ConflictException('Already following this user');
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Already following this user');
+      }
+      throw e;
     }
 
     const follower = await this.prisma.user.findUnique({ where: { id: followerId }, select: publicUserSelect });

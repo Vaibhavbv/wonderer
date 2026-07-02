@@ -1,8 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { TripsService } from './trips.service';
 import { PrismaService } from '@prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+
+const uniqueConstraintError = () =>
+  new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+    clientVersion: '6.2.1',
+  });
 
 describe('TripsService', () => {
   let service: TripsService;
@@ -203,9 +210,17 @@ describe('TripsService', () => {
   describe('likeTrip / unlikeTrip', () => {
     it('throws ConflictException when liking an already-liked trip', async () => {
       prisma.trip.findUnique.mockResolvedValue({ id: 'trip-1', userId: 'owner', privacy: 'PUBLIC' });
-      prisma.like.create.mockRejectedValue(new Error('unique constraint'));
+      prisma.like.create.mockRejectedValue(uniqueConstraintError());
 
       await expect(service.likeTrip('user-1', 'trip-1')).rejects.toThrow(ConflictException);
+    });
+
+    it('does not mask a non-conflict DB error as ConflictException', async () => {
+      prisma.trip.findUnique.mockResolvedValue({ id: 'trip-1', userId: 'owner', privacy: 'PUBLIC' });
+      prisma.like.create.mockRejectedValue(new Error('connection lost'));
+
+      await expect(service.likeTrip('user-1', 'trip-1')).rejects.toThrow('connection lost');
+      await expect(service.likeTrip('user-1', 'trip-1')).rejects.not.toBeInstanceOf(ConflictException);
     });
 
     it('increments likesCount and notifies the owner on a new like', async () => {
