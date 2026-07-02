@@ -1,8 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { SocialService } from './social.service';
 import { PrismaService } from '@prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+
+const uniqueConstraintError = () =>
+  new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+    clientVersion: '6.2.1',
+  });
 
 describe('SocialService', () => {
   let service: SocialService;
@@ -53,9 +60,17 @@ describe('SocialService', () => {
 
     it('throws ConflictException when already following', async () => {
       prisma.user.findUnique.mockResolvedValueOnce({ id: 'target', username: 'target' });
-      prisma.follow.create.mockRejectedValue(new Error('unique constraint'));
+      prisma.follow.create.mockRejectedValue(uniqueConstraintError());
 
       await expect(service.follow('user-1', 'target')).rejects.toThrow(ConflictException);
+    });
+
+    it('does not mask a non-conflict DB error as ConflictException', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce({ id: 'target', username: 'target' });
+      prisma.follow.create.mockRejectedValue(new Error('connection lost'));
+
+      await expect(service.follow('user-1', 'target')).rejects.toThrow('connection lost');
+      await expect(service.follow('user-1', 'target')).rejects.not.toBeInstanceOf(ConflictException);
     });
 
     it('creates a follow record and notifies the target', async () => {

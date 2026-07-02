@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateCommentDto } from './comments.dto';
@@ -146,7 +147,10 @@ export class CommentsService {
     try {
       await this.prisma.commentLike.create({ data: { commentId, userId } });
     } catch (e) {
-      throw new ConflictException('Already liked this comment');
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Already liked this comment');
+      }
+      throw e;
     }
 
     await this.prisma.comment.update({

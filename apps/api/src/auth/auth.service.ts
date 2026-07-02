@@ -8,16 +8,16 @@ export class AuthService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async syncUser(dto: SyncUserDto) {
+  async syncUser(clerkId: string, dto: SyncUserDto) {
     const user = await this.prisma.user.upsert({
-      where: { clerkId: dto.clerkId },
+      where: { clerkId },
       update: {
         email: dto.email,
         displayName: dto.displayName || undefined,
         avatarUrl: dto.avatarUrl || undefined,
       },
       create: {
-        clerkId: dto.clerkId,
+        clerkId,
         email: dto.email,
         displayName: dto.displayName,
         username: dto.username,

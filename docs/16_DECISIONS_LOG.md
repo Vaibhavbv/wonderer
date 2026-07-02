@@ -89,4 +89,32 @@ Entries **ADR-000..ADR-008** are *reconstructed* from the audited codebase (they
 - **Tradeoffs:** ➖ known bugs/security gaps remain until Phase 1; ➕ zero regression risk; clear separation of "clean" vs "fix."
 - **Future:** Security/correctness fixes are Phase 1 (WV-101..104); dead-schema removal is WV-109.
 
-*(Add ADR-011+ below as decisions are made.)*
+### ADR-011 — Harden `auth/sync` by deriving `clerkId` from the verified JWT, not deleting the endpoint
+- **Date:** 2026-07-02 · **Status:** Accepted
+- **Context:** `POST /v1/auth/sync` was unguarded and trusted a client-supplied `clerkId`, letting any caller overwrite any user's profile (WV-101, [`17_TECH_DEBT.md`](./17_TECH_DEBT.md) #1). Two fixes were possible: delete the endpoint (its job is already done by `ClerkAuthGuard`'s auto-provisioning upsert), or guard it and stop trusting the body.
+- **Decision:** Guard it with `ClerkAuthGuard` and take `clerkId` exclusively from `@CurrentUser('clerkId')` (the verified JWT `sub` claim); removed the now-redundant `clerkId` field from `SyncUserDto`. Kept the endpoint rather than deleting it, since it still serves a distinct purpose the guard doesn't: pushing profile-field *updates* (email/displayName/avatarUrl) for an *existing* user, not just create-on-first-request.
+- **Tradeoffs:** ➖ the `CurrentUser` interface gained a `clerkId?: string` field (previously undeclared, though the guard always set it — a pre-existing type/reality mismatch, now corrected). ➕ closes the tampering hole with a one-line change to the trust boundary rather than removing functionality; verified no frontend caller exists today (grepped `apps/web`), so this is a zero-risk behavioral change.
+- **Future:** Once Clerk webhook sync is implemented (WV-201, Phase 2), re-evaluate whether this endpoint is still needed at all.
+
+### ADR-012 — Flatten env validation instead of fixing the unused nested config classes
+- **Date:** 2026-07-02 · **Status:** Accepted
+- **Context:** `env.validation.ts`'s `validate()` never actually ran `class-validator` (WV-104); the file also declared a nested `EnvConfig`/`DatabaseConfig`/... class tree that was never instantiated or referenced anywhere else in the codebase (confirmed by grep), and would not have matched the actually-flat env object even if wired up.
+- **Decision:** Replace the dead nested classes with one flat `EnvironmentVariables` class mirroring the real, flat env vars every `ConfigService.get('X')` call in the codebase already reads (verified by grepping every call site). Wire `plainToInstance` + `validateSync` for real. Required vars (`DATABASE_URL`, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`) have no `@IsOptional()` and now fail fast at boot; everything else stays optional, preserving each call site's existing `.get(key, default)` fallback behavior.
+- **Tradeoffs:** ➖ this is a full rewrite of the file's structure, not a small patch — but the nested structure was dead code providing false confidence, not "working code" to preserve. ➕ boot now fails immediately and legibly on real misconfiguration instead of surfacing as a confusing runtime error deep in Prisma or Clerk's SDK.
+- **Future:** If the config surface grows large enough to want namespacing (`configService.get('database.url')`), reintroduce nesting deliberately with a custom `ConfigModule` load function that actually builds the nested shape from the flat env — don't resurrect the old dead classes as-is.
+
+### ADR-013 — Apply `ThrottlerGuard` globally, exempt health checks
+- **Date:** 2026-07-02 · **Status:** Accepted
+- **Context:** `ThrottlerModule` was registered with real limits ('short' 100/min, 'long' 1000/hr) but no `ThrottlerGuard` was ever applied — the limits were pure configuration with no effect (WV-901).
+- **Decision:** Provide `ThrottlerGuard` via `APP_GUARD` in `app.module.ts` so every route is covered by default; add `@SkipThrottle()` to `AppController` (`/health`, `/ready`) so infrastructure health/readiness polling is never throttled.
+- **Tradeoffs:** ➖ a global guard is coarse — some endpoints may want bespoke limits later (e.g. stricter limits on `POST /v1/ai/*` given OpenAI cost, looser on public reads). ➕ closes an immediate, unambiguous abuse-protection gap with the least code; per-route overrides via `@Throttle()`/`@SkipThrottle()` remain available without further wiring.
+- **Future:** Revisit per-route throttle profiles when real traffic patterns are known (Phase 9, WV-903).
+
+### ADR-014 — Update the 3 spec tests that encoded the WV-103 bug, rather than leave them failing or skip them
+- **Date:** 2026-07-02 · **Status:** Accepted
+- **Context:** Fixing WV-103 (broad `catch` blocks masking any DB error as a 409) meant `trips.service.spec.ts`, `comments.service.spec.ts`, and `social.service.spec.ts` each had one existing test that mocked a *generic* `Error` and asserted it became a `ConflictException` — i.e., the tests were pinned to the exact bug being fixed, not to the intended behavior.
+- **Decision:** Update each test's mock to reject with a real `Prisma.PrismaClientKnownRequestError` (`code: 'P2002'`) so the "already liked/following" case still correctly proves a 409 for a genuine unique-constraint violation; added one new test per file proving a *different* underlying error is no longer masked (propagates as-is). This was treated as part of completing WV-103, not as unrelated test refactoring — the tests were asserting incorrect behavior by construction.
+- **Tradeoffs:** ➖ touches test files beyond the literal "fix identified issues" instruction's narrowest reading. ➕ leaving them as-is would mean either the fix breaks 3 passing tests (regressing coverage) or the tests silently keep validating the wrong contract — neither is acceptable for a correctness fix.
+- **Future:** None — this is now the correct, permanent behavior to test against.
+
+*(Add ADR-015+ below as decisions are made.)*

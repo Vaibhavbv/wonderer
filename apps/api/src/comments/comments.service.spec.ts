@@ -5,9 +5,16 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CommentsService } from './comments.service';
 import { PrismaService } from '@prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+
+const uniqueConstraintError = () =>
+  new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+    clientVersion: '6.2.1',
+  });
 
 describe('CommentsService', () => {
   let service: CommentsService;
@@ -178,9 +185,17 @@ describe('CommentsService', () => {
 
     it('throws ConflictException when liking an already-liked comment', async () => {
       prisma.comment.findUnique.mockResolvedValue({ id: 'comment-1', userId: 'owner' });
-      prisma.commentLike.create.mockRejectedValue(new Error('unique constraint'));
+      prisma.commentLike.create.mockRejectedValue(uniqueConstraintError());
 
       await expect(service.like('user-1', 'comment-1')).rejects.toThrow(ConflictException);
+    });
+
+    it('does not mask a non-conflict DB error as ConflictException', async () => {
+      prisma.comment.findUnique.mockResolvedValue({ id: 'comment-1', userId: 'owner' });
+      prisma.commentLike.create.mockRejectedValue(new Error('connection lost'));
+
+      await expect(service.like('user-1', 'comment-1')).rejects.toThrow('connection lost');
+      await expect(service.like('user-1', 'comment-1')).rejects.not.toBeInstanceOf(ConflictException);
     });
 
     it('increments likesCount and notifies the comment author', async () => {

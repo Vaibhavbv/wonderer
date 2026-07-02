@@ -189,6 +189,8 @@ export class TripsService {
   }
 
   async duplicateTrip(userId: string, tripId: string) {
+    await this.getAccessibleTrip(tripId, userId);
+
     const original = await this.prisma.trip.findUnique({
       where: { id: tripId },
       include: { locations: true, media: true },
@@ -267,7 +269,10 @@ export class TripsService {
     try {
       await this.prisma.like.create({ data: { tripId, userId } });
     } catch (e) {
-      throw new ConflictException('Trip already liked');
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Trip already liked');
+      }
+      throw e;
     }
 
     await this.prisma.trip.update({
