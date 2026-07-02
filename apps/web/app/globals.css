@@ -193,3 +193,31 @@
   position: relative;
   z-index: 1;
 }
+
+/* Custom cursor mode (added by CursorFX on fine pointers): hide the native
+   cursor so the dot + ring take over. */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+
+/* Animated underline for nav links — draws left→right on hover. */
+.nav-underline {
+  position: relative;
+}
+
+.nav-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -4px;
+  height: 1px;
+  background: currentColor;
+  transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-underline:hover::after,
+.nav-underline[data-active="true"]::after {
+  right: 0;
+}

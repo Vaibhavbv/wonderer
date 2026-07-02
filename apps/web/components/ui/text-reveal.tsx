@@ -15,6 +15,7 @@ export function TextReveal({
   by = "word",
   delay = 0,
   stagger,
+  blur = false,
 }: {
   text: string;
   className?: string;
@@ -23,6 +24,8 @@ export function TextReveal({
   delay?: number;
   /** Seconds between each piece. Defaults to 0.06 (word) / 0.02 (char). */
   stagger?: number;
+  /** Cinematic variant: pieces also defocus in from a soft blur. */
+  blur?: boolean;
 }) {
   const pieces = by === "char" ? Array.from(text) : text.split(" ");
   const step = stagger ?? (by === "char" ? 0.02 : 0.06);
@@ -32,15 +35,26 @@ export function TextReveal({
       <span className="sr-only">{text}</span>
       <span aria-hidden className="inline">
         {pieces.map((piece, i) => (
-          <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+          <span
+            key={i}
+            className={`inline-block pb-[0.08em] align-bottom ${blur ? "" : "overflow-hidden"}`}
+          >
             <motion.span
               className="inline-block"
-              initial={{ y: "110%", opacity: 0 }}
-              animate={{ y: "0%", opacity: 1 }}
-              transition={{ duration: 0.6, delay: delay + i * step, ease }}
+              initial={
+                blur
+                  ? { y: "40%", opacity: 0, filter: "blur(10px)" }
+                  : { y: "110%", opacity: 0 }
+              }
+              animate={
+                blur
+                  ? { y: "0%", opacity: 1, filter: "blur(0px)" }
+                  : { y: "0%", opacity: 1 }
+              }
+              transition={{ duration: blur ? 0.8 : 0.6, delay: delay + i * step, ease }}
             >
               {piece === " " ? " " : piece}
-              {by === "word" && i < pieces.length - 1 ? " " : ""}
+              {by === "word" && i < pieces.length - 1 ? " " : ""}
             </motion.span>
           </span>
         ))}

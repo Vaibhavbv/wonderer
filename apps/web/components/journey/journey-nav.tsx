@@ -36,7 +36,7 @@ export function JourneyNav({ accent }: { accent: string }) {
               <Link
                 key={l.label}
                 href={l.href}
-                className="text-sm text-white/70 transition-colors hover:text-white"
+                className="nav-underline text-sm text-white/70 transition-colors hover:text-white"
               >
                 {l.label}
               </Link>
