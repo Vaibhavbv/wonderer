@@ -60,10 +60,9 @@ None — **Phase 0 is COMPLETE and verified.** Awaiting explicit Phase 1 kickoff
 
 ## Next Tasks ⏭️
 
-**Phase 0 is COMPLETE — nothing remains in scope.** The only step left is outside the repo:
-1. Human review/merge of `phase-0/repo-foundation` into `main`/`v2`.
+**Phase 0 is COMPLETE and MERGED.** ✅ `phase-0/repo-foundation` was merged into `main` (merge commit `7e43c01`, `--no-ff`) on 2026-07-03. Per project policy, each phase branch is merged into `main` on completion. Not yet pushed to origin.
 
-**Do NOT start Phase 1 until the user explicitly says so.**
+**Do NOT start Phase 1 until the user explicitly says so.** When it begins, cut a fresh branch (e.g. `phase-1/stabilization`) off `main`.
 
 **When Phase 1 begins**, the opening tickets are (see [`08_ENGINEERING_BACKLOG.md`](./08_ENGINEERING_BACKLOG.md)):
 - WV-105 (consolidate frontend API client)
