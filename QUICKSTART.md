@@ -1,24 +1,10 @@
 # Wanderverse — QuickStart Guide
 
-## 🎯 What You Can Do Right Now (No Setup Required)
+> ⚠️ **This guide is partially outdated.** For the authoritative, code-audited documentation, see **[`docs/00_README.md`](./docs/00_README.md)** — start with [`docs/05_AI_CONTEXT.md`](./docs/05_AI_CONTEXT.md) and [`docs/15_PHASE_STATUS.md`](./docs/15_PHASE_STATUS.md). Corrections: the real app uses **React Three Fiber + Framer Motion** (not GSAP), renders geography with **R3F globes** (Mapbox is not used in the browser), and the signature experience lives in `apps/web/components/journey/` + `components/three/` (there is no `components/story/WanderView`). The standalone `wander-demo.html` prototype was removed in Phase 0 (superseded by the real implementation).
 
-### 1. Open the Standalone Wander Demo
+## 🎯 What You Can Do Right Now
 
-Navigate to this file and open it in your browser:
-
-```
-C:\Users\L-0098\Documents\Personal\Kimi\Wonder\wanderverse\apps\web\public\wander-demo.html
-```
-
-Just double-click it — it opens in any browser. This is a **self-contained, fully animated demo** of the signature WanderView experience:
-
-- Scroll to see the map, route line, and vehicle icon animate together
-- Photos and text fade in as you progress
-- Timeline on the right tracks your position
-- Keyboard navigation (arrow keys, spacebar)
-- Click the timeline dots to jump between sections
-
-> **Note:** This is a vanilla HTML/CSS/JS prototype. The real app uses Next.js 15 + React Three Fiber + Mapbox GL + GSAP for the full production experience.
+The fastest way to see the app: run the frontend dev server (below). The signature "Wander View" is live at `/` (demo data) and at `/trips/[id]/wander` (real trips).
 
 ---
 
