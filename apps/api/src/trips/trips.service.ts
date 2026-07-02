@@ -4,12 +4,16 @@ import { CreateTripDto, UpdateTripDto, TripListQueryDto } from './trips.dto';
 import { Prisma, TripPrivacy, TripStatus } from '@prisma/client';
 import { generateSlug } from '@common/utils/slug';
 import { inferTheme } from '@common/utils/theme-inference';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class TripsService {
   private readonly logger = new Logger(TripsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   // Maps snake_case sort keys from the query string to Prisma schema fields.
   private static readonly SORT_FIELDS: Record<string, string> = {
@@ -129,7 +133,11 @@ export class TripsService {
       throw new ForbiddenException('You do not have access to this trip');
     }
 
-    return trip;
+    const isLiked = await this.prisma.like.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    }).then(Boolean);
+
+    return { ...trip, isLiked };
   }
 
   async updateTrip(userId: string, tripId: string, dto: UpdateTripDto) {
@@ -242,5 +250,53 @@ export class TripsService {
         _sum: { fileSize: true },
       }).then((r) => r._sum.fileSize || 0),
     };
+  }
+
+  private async getAccessibleTrip(tripId: string, userId: string) {
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) throw new NotFoundException('Trip not found');
+    if (trip.userId !== userId && trip.privacy === 'PRIVATE') {
+      throw new ForbiddenException('You do not have access to this trip');
+    }
+    return trip;
+  }
+
+  async likeTrip(userId: string, tripId: string) {
+    const trip = await this.getAccessibleTrip(tripId, userId);
+
+    try {
+      await this.prisma.like.create({ data: { tripId, userId } });
+    } catch (e) {
+      throw new ConflictException('Trip already liked');
+    }
+
+    await this.prisma.trip.update({
+      where: { id: tripId },
+      data: { likesCount: { increment: 1 } },
+    });
+
+    if (trip.userId !== userId) {
+      const liker = await this.prisma.user.findUnique({ where: { id: userId } });
+      await this.notifications.create({
+        userId: trip.userId,
+        type: 'like',
+        title: `${liker?.displayName || liker?.username || 'Someone'} liked your trip`,
+        body: trip.title,
+        data: { tripId, userId },
+      });
+    }
+
+    return { liked: true };
+  }
+
+  async unlikeTrip(userId: string, tripId: string) {
+    const result = await this.prisma.like.deleteMany({ where: { tripId, userId } });
+    if (result.count > 0) {
+      await this.prisma.trip.update({
+        where: { id: tripId },
+        data: { likesCount: { decrement: 1 } },
+      });
+    }
+    return { liked: false };
   }
 }

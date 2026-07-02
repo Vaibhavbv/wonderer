@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { Compass, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { cn } from "@/lib/utils";
 import { useMyUsername } from "@/lib/use-my-username";
 
@@ -59,6 +60,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isSignedIn ? (
               <>
+                <NotificationBell />
                 <Link href={profileHref}>
                   <Button variant="ghost" size="sm">Profile</Button>
                 </Link>
@@ -111,7 +113,8 @@ export function Navbar() {
                   <Link href="/dashboard" className="flex-1" onClick={() => setMobileOpen(false)}>
                     <Button variant="outline" fullWidth size="sm">Dashboard</Button>
                   </Link>
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-1">
+                    <NotificationBell />
                     <UserButton afterSignOutUrl="/" />
                   </div>
                 </>

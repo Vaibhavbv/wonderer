@@ -1,12 +1,14 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import {
   motion,
   useScroll,
   useTransform,
   useSpring,
   useMotionValueEvent,
+  useReducedMotion,
   AnimatePresence,
   type MotionValue,
 } from "framer-motion";
@@ -15,6 +17,13 @@ import { JourneyNav } from "./journey-nav";
 import { DestinationCard } from "./destination-card";
 import { ParticleField } from "./particle-field";
 import { RouteVehicle } from "./route-vehicle";
+import { TextReveal } from "@/components/ui/text-reveal";
+
+// The WebGL journey scene is heavy — load it only on the client, after paint.
+const JourneyScene = dynamic(
+  () => import("@/components/three/journey-scene").then((m) => m.JourneyScene),
+  { ssr: false }
+);
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -26,6 +35,13 @@ export function JourneyExperience({
   cardHrefBase?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Resolve motion preference only after mount: the server can't know it,
+  // and branching on it during hydration would mismatch the SSR HTML.
+  const prefersReduced = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const show3D = mounted && !prefersReduced;
+  const showFallback = mounted && !!prefersReduced;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
@@ -48,7 +64,13 @@ export function JourneyExperience({
     <div ref={containerRef} style={{ height: `${(n + 1) * 100}vh` }} className="relative bg-black">
       {/* Fixed cinematic stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* Crossfading destination photographs */}
+        {/* The living 3D world: globe, stars, route, vehicle, weather */}
+        {show3D && (
+          <JourneyScene destinations={destinations} progress={progress} active={dest} />
+        )}
+
+        {/* Crossfading destination photographs — they part like curtains
+            between stops, revealing the globe fly-through underneath */}
         {destinations.map((d, i) => (
           <BackgroundLayer key={d.id} dest={d} index={i} total={n} progress={progress} />
         ))}
@@ -71,28 +93,33 @@ export function JourneyExperience({
         {/* Vignette for cinematic depth + text legibility */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.55)_100%)]" />
 
-        {/* Floating atmospheric particles, tinted to the active theme */}
-        <ParticleField accent={dest.theme.accent} variant={dest.theme.particle} />
-
-        {/* The hand-drawn route + travelling vehicle */}
-        <RouteVehicle progress={progress} accent={dest.theme.accent} vehicle={dest.vehicle} />
+        {/* Reduced-motion fallback: the original 2D atmosphere + route */}
+        {showFallback && (
+          <>
+            <ParticleField accent={dest.theme.accent} variant={dest.theme.particle} />
+            <RouteVehicle progress={progress} accent={dest.theme.accent} vehicle={dest.vehicle} />
+          </>
+        )}
 
         {/* Giant destination name, magazine style */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={dest.id}
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0, y: -30, filter: "blur(8px)" }}
-              transition={{ duration: 0.9, ease }}
+              transition={{ duration: 0.7, ease }}
               className="text-center px-6"
             >
               <p className="text-white/70 text-sm sm:text-base tracking-[0.3em] uppercase mb-3">
-                {dest.country}
+                <TextReveal text={dest.country ?? ""} by="word" delay={0.3} />
               </p>
-              <h2 className="font-heading text-white text-6xl sm:text-8xl lg:text-[9rem] leading-[0.9] drop-shadow-2xl">
-                {dest.name}
+              <h2
+                className="font-heading text-white text-6xl sm:text-8xl lg:text-[9rem] leading-[0.9] drop-shadow-2xl"
+                style={{ textShadow: `0 0 80px ${dest.theme.accent}66` }}
+              >
+                <TextReveal text={dest.name} by="char" blur stagger={0.035} />
               </h2>
             </motion.div>
           </AnimatePresence>
@@ -114,6 +141,7 @@ export function JourneyExperience({
                 style={{
                   width: i === active ? 28 : 12,
                   background: i === active ? dest.theme.accent : "rgba(255,255,255,0.35)",
+                  boxShadow: i === active ? `0 0 12px ${dest.theme.accent}` : "none",
                 }}
               />
               <span
@@ -121,6 +149,7 @@ export function JourneyExperience({
                 style={{
                   color: i === active ? "#fff" : "rgba(255,255,255,0.4)",
                   opacity: i === active ? 1 : 0.6,
+                  textShadow: i === active ? `0 0 14px ${dest.theme.accent}` : "none",
                 }}
               >
                 {d.name}
@@ -148,8 +177,10 @@ function BackgroundLayer({
   progress: MotionValue<number>;
 }) {
   const center = (index + 0.5) / total;
-  const span = 0.75 / total;
-  const opacity = useTransform(progress, [center - span, center, center + span], [0, 1, 0]);
+  // Tighter span than before: photos fully clear the stage between stops so
+  // the camera fly-through over the globe carries the transition.
+  const span = 0.62 / total;
+  const opacity = useTransform(progress, [center - span, center, center + span], [0, 0.92, 0]);
   const scale = useTransform(progress, [center - span, center, center + span], [1.18, 1.06, 1.18]);
   if (!dest.image) {
     return (

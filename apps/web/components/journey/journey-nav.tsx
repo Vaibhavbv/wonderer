@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { Plane } from "lucide-react";
 import { useMyUsername } from "@/lib/use-my-username";
+import { NotificationBell } from "@/components/layout/notification-bell";
+import { Magnetic } from "@/components/ui/magnetic";
 
 const links = [
   { label: "Home", href: "/" },
@@ -34,7 +36,7 @@ export function JourneyNav({ accent }: { accent: string }) {
               <Link
                 key={l.label}
                 href={l.href}
-                className="text-sm text-white/70 transition-colors hover:text-white"
+                className="nav-underline text-sm text-white/70 transition-colors hover:text-white"
               >
                 {l.label}
               </Link>
@@ -44,6 +46,7 @@ export function JourneyNav({ accent }: { accent: string }) {
           <div className="flex items-center gap-3">
             {isSignedIn ? (
               <>
+                <NotificationBell variant="dark" />
                 <Link href={profileHref} className="text-sm text-white/80 hover:text-white">
                   Profile
                 </Link>
@@ -53,11 +56,13 @@ export function JourneyNav({ accent }: { accent: string }) {
                 <UserButton afterSignOutUrl="/" />
               </>
             ) : (
-              <SignInButton mode="modal">
-                <button className="rounded-full border border-white/25 px-4 py-1.5 text-sm text-white transition-colors hover:bg-white/10">
-                  Sign in
-                </button>
-              </SignInButton>
+              <Magnetic>
+                <SignInButton mode="modal">
+                  <button className="rounded-full border border-white/25 px-4 py-1.5 text-sm text-white transition-colors hover:bg-white/10">
+                    Sign in
+                  </button>
+                </SignInButton>
+              </Magnetic>
             )}
           </div>
         </div>

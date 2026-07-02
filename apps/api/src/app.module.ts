@@ -23,6 +23,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ExportsModule } from './exports/exports.module';
+import { CommentsModule } from './comments/comments.module';
 
 import { validate } from './config/env.validation';
 
@@ -73,6 +74,7 @@ import { validate } from './config/env.validation';
     NotificationsModule,
     AnalyticsModule,
     ExportsModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

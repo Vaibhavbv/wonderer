@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { DestinationsGlobe } from "@/components/journey/destinations-globe";
 import { journey } from "@/lib/journey-data";
 
 export const metadata: Metadata = {
@@ -21,6 +22,8 @@ export default function DestinationsPage() {
               Every stop on the journey, from Delhi to the Alps.
             </p>
           </header>
+
+          <DestinationsGlobe destinations={journey} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {journey.map((dest) => (

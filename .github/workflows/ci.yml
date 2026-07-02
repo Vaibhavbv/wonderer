@@ -1,4 +1,4 @@
-name: CI / Lint & Type Check
+name: CI
 
 on:
   push:
@@ -7,8 +7,45 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  api:
+    name: API
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wanderverse_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: apps/api
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wanderverse_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      CLERK_SECRET_KEY: sk_test_ci_placeholder
+      CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,27 +54,72 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         run: npm ci
-        working-directory: ./apps/api
 
-      - name: Lint backend
+      - name: Lint
         run: npm run lint
-        working-directory: ./apps/api
 
-      - name: Install frontend dependencies
+      - name: Typecheck
+        run: npx tsc --noEmit -p .
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuaW5jbHVkZWQuY2F0LTEyMy5sY2wuZGV2JA==
+      CLERK_SECRET_KEY: sk_test_ci_placeholder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
         run: npm ci
-        working-directory: ./apps/web
 
-      - name: Type check frontend
+      - name: Typecheck
         run: npm run type-check
-        working-directory: ./apps/web
 
       # Frontend ESLint isn't set up yet (no eslint-config-next). Keep this
       # advisory so it doesn't block CI; the type-check above is the real gate.
       # TODO: add eslint-config-next and make this required.
-      - name: Lint frontend
+      - name: Lint
         run: npm run lint
-        working-directory: ./apps/web
         continue-on-error: true
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build

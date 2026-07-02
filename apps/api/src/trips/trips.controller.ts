@@ -68,4 +68,16 @@ export class TripsController {
   async getTripStats(@CurrentUser('id') userId: string, @Param('id') tripId: string) {
     return this.tripsService.getTripStats(userId, tripId);
   }
+
+  @Post(':id/like')
+  @ApiOperation({ summary: 'Like a trip' })
+  async likeTrip(@CurrentUser('id') userId: string, @Param('id') tripId: string) {
+    return this.tripsService.likeTrip(userId, tripId);
+  }
+
+  @Delete(':id/like')
+  @ApiOperation({ summary: 'Unlike a trip' })
+  async unlikeTrip(@CurrentUser('id') userId: string, @Param('id') tripId: string) {
+    return this.tripsService.unlikeTrip(userId, tripId);
+  }
 }

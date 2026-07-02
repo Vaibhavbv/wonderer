@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { SmoothScroll } from "@/components/providers/smooth-scroll";
+import { CursorFX } from "@/components/ui/cursor";
 import "./globals.css";
 
 const inter = Inter({
@@ -37,6 +39,8 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
         <body className="antialiased min-h-screen">
+          <SmoothScroll />
+          <CursorFX />
           {children}
         </body>
       </html>
