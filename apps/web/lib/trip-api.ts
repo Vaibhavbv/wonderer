@@ -1,19 +1,4 @@
-import { ApiError } from "./api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.success) {
-    const message = json?.error?.message || `Request failed (${res.status})`;
-    throw new ApiError(message, res.status);
-  }
-  return json.data as T;
-}
-
-function authHeaders(token: string): HeadersInit {
-  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-}
+import { API_URL, ApiError, authHeaders, unwrap, unwrapWithMeta } from "./api";
 
 export interface DestinationTheme {
   from: string;
@@ -102,15 +87,12 @@ export interface TripSummary {
 
 export async function getTrips(token: string): Promise<{ items: TripSummary[]; total: number }> {
   const res = await fetch(`${API_URL}/v1/trips?per_page=50&sort=created_at:desc`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token, false),
     cache: "no-store",
   });
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.success) {
-    throw new ApiError(json?.error?.message || `Request failed (${res.status})`, res.status);
-  }
-  const items = (json.data as TripSummary[]) ?? [];
-  return { items, total: json.meta?.total ?? items.length };
+  const { data, meta } = await unwrapWithMeta<TripSummary[], { total?: number }>(res);
+  const items = data ?? [];
+  return { items, total: meta?.total ?? items.length };
 }
 
 export async function createTrip(token: string, input: CreateTripInput): Promise<TripRecord> {
