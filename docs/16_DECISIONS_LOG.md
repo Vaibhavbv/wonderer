@@ -124,4 +124,16 @@ Entries **ADR-000..ADR-008** are *reconstructed* from the audited codebase (they
 - **Tradeoffs:** ➖ touched 11 docs in one pass (broad diff for a "verification" session) — but every edit is a status marker, zero source code changed. ➕ restores the core guarantee of the doc system (docs = truth); establishes the convention that fix-status is updated in *all* referencing docs at fix time, not deferred.
 - **Future:** When resolving a ticket, update every doc that references it in the same change (the "update the docs you invalidate" rule in [`05_AI_CONTEXT.md`](./05_AI_CONTEXT.md)) — this session's reconciliation debt existed because session 2 was scoped to only 4 named files.
 
-*(Add ADR-016+ below as decisions are made.)*
+### ADR-016 — Trip locations CRUD lives in the trips module, guarded by an extracted `getEditableTrip`
+- **Date:** 2026-07-10 · **Status:** Accepted
+- **Context:** The flagship-journal upgrade needed post-create itinerary editing; no endpoint existed. `getAccessibleTrip` is a *read* check (it admits any user for non-PRIVATE trips) and must not gate writes; the owner-or-EDITOR check lived inline in `updateTrip` only.
+- **Decision:** Model locations as a sub-resource of trips (`/v1/trips/:id/locations…`) inside the existing trips module rather than a new module — they share the trip's access model and service. Extract the mutation guard into a private `getEditableTrip(tripId, userId)` used by `updateTrip` and all four location methods. Order semantics: append-on-add, compact-on-delete, index-assign on reorder (exact id-set match required, 400 otherwise). Coordinates are **required** on the new add/update DTOs (unlike the create-time `LocationDto`) because their whole purpose is placing the globe pin. No schema change; `Trip` has no locations counter (stats count live), so none is maintained — do not "fix" this.
+- **Tradeoffs:** ➖ trips module grows; ➕ no new module boilerplate for a sub-resource, one access model, and the read/write guard distinction is now explicit and reusable.
+
+### ADR-017 — Homepage branches on auth in the server component, env-guarded
+- **Date:** 2026-07-10 · **Status:** Accepted
+- **Context:** The homepage played the same hardcoded demo journey for everyone. The personal experience needed a signed-in variant without breaking the "public site boots without Clerk" guarantee — `middleware.ts` only mounts `clerkMiddleware()` when `CLERK_SECRET_KEY` is set, and `auth()` throws when the middleware never ran.
+- **Decision:** Keep one route. `app/page.tsx` returns `<MarketingHome/>` when `CLERK_SECRET_KEY` is unset or the visitor is signed out, `<PersonalHome/>` otherwise. No middleware rewrites, no separate route groups. The personal home's data fetches (`getMyProfile`/`getTrips`/`getFeed`) are individually `.catch`ed so one failing call degrades only its section.
+- **Tradeoffs:** ➖ `/` becomes a dynamic route (no static prerender) whenever Clerk is configured; ➕ single URL for both audiences, zero routing indirection, and the env guard preserves the no-Clerk boot path.
+
+*(Add ADR-018+ below as decisions are made.)*

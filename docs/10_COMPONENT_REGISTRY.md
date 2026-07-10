@@ -68,9 +68,9 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 
 | Component | Purpose | Key props | Deps | Reusable | Notes |
 |---|---|---|---|---|---|
-| `CreateTripButton` (`create-trip-button.tsx`) | ⭐ Full real flow: create trip → presign → S3 upload → attach media → set cover → redirect | none | Clerk, `trip-api`, media presign | ⚠ | Reference example for write flows. **Sends `lat:0,lng:0`** (no client geocoding — WV-301). |
-| `StatsCards` (`stats-cards.tsx`) | 4 animated stat tiles | `stats: DashboardStats` | Framer Motion | ✅ | — |
-| `TripGrid` (`trip-grid.tsx`) | Trip cards w/ tilt, cover resolution, badges, empty state | `trips: TripSummary[]` | `TiltCard` | ✅ | `coverUrl` logic duplicated (see 17). |
+| `CreateTripButton` (`create-trip-button.tsx`) | ⭐ Full real flow: create trip → shared upload pipeline → set cover → redirect | none | Clerk, `trip-api`, `lib/upload` | ⚠ | Reference example for write flows. Optional per-stop lat/lng inputs (collapsed); blank still sends `0,0` = "pin not placed" (geocoding still WV-301). |
+| `StatsCards` (`stats-cards.tsx`) | 4 animated stat tiles | `stats: DashboardStats` | Framer Motion | ✅ | Also reused by `PersonalHome`. |
+| `TripGrid` (`trip-grid.tsx`) | Trip cards w/ tilt, badges, one-click DRAFT publish, hover edit shortcut, empty state | `trips: TripSummary[]` | `TiltCard`, `trip-api` | ✅ | Covers via shared `mediaSrc`. In-card actions are buttons (card is a Link). |
 
 ---
 
@@ -78,9 +78,31 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 
 | Component | Purpose | Key props | Deps | Reusable | Notes |
 |---|---|---|---|---|---|
-| `TripDetail` (`trip-detail.tsx`) | Full trip view: hero, action bar, destinations, photo grid, comments | `trip: TripRecord` | `LikeButton`, `CommentThread` | ⚠ | **Edit & Share buttons non-functional** (no handlers). `mediaUrl` logic duplicated. |
+| `TripDetail` (`trip-detail.tsx`) | Full trip view: hero, action bar (Wander/Like/Journal/Edit/Share), destinations, photo grid, comments | `trip: TripRecord`, `viewerIsOwner?` | `LikeButton`, `ShareButton`, `CommentThread` | ⚠ | ~~Edit & Share non-functional~~ → Edit links to `/trips/[id]/edit` (owner only), Share works. Images via `mediaSrc`. |
+| `TripEditor` (`trip-editor.tsx`) | ⭐ Owner editing workhorse: details/publish/cover/photos/itinerary CRUD/danger zone | `trip: TripRecord` | `trip-api` (incl. locations), `lib/upload` | ⚠ | Page: `app/trips/[id]/edit`. Optimistic reorder w/ revert. |
+| `ShareButton` (`share-button.tsx`) | Copy trip link; private-trip hint w/ owner "make unlisted & copy" | `tripId`, `privacy`, `viewerIsOwner` | `trip-api`, clipboard | ✅ | Reduced-motion-safe swap animation. |
 | `LikeButton` (`like-button.tsx`) | Optimistic like/unlike | `tripId`, initial state | `trip-api`, Clerk | ✅ | Has spec test (revert-on-failure). Reference for optimistic UI. |
 | `CommentThread` (`comment-thread.tsx`) | Comment CRUD + replies + optimistic like | `tripId` | `comments-api`, Clerk | ✅ | Complete. |
+
+---
+
+## `components/journal/` — Trip journal (story editor)
+
+| Component | Purpose | Key props | Deps | Reusable | Notes |
+|---|---|---|---|---|---|
+| `JournalEditor` (`journal-editor.tsx`) | ⭐ Block-based journal over the story API: load, edit, preview, versioned save | `trip: TripRecord`, `canEdit` | `story-api`, `StoryBlockEditor`, `AiAssistPanel` | ⚠ | Page: `app/trips/[id]/journal`. Hero pinned first; **unknown block types preserved on save** (PUT = full replace). `beforeunload` guard when dirty. |
+| `StoryBlockEditor` (`story-block.tsx`) | Renders/edits one block (hero/heading/text/photo; opaque fallback) | `block`, `media`, `preview`, callbacks | `mediaSrc` | ⚠ | Photo block picks from trip media thumbnails. |
+| `AiAssistPanel` (`ai-assist-panel.tsx`) | Slide-over AI assistant: story draft (tone/length/guidance) + title chips | `trip`, `open`, `onInsertStory`, `onApplyTitle` | `ai-api` (queue+poll) | ⚠ | 403 = credits exhausted, FAILED/timeout handled with friendly copy. |
+
+---
+
+## `components/home/` — Homepage variants
+
+| Component | Purpose | Key props | Deps | Reusable | Notes |
+|---|---|---|---|---|---|
+| `MarketingHome` (`marketing-home.tsx`) | Signed-out home: demo journey + landing sections + footer | none | `JourneyExperience`, `landing/*` | ⚠ (**RSC**) | ADR-017. |
+| `PersonalHome` (`personal-home.tsx`) | Signed-in home: greeting, stats, continue-draft card, feed | `me`, `trips`, `tripsTotal`, `feed` | `StatsCards`, `HomeFeed`, `ClaimUsernameBanner` | ⚠ (**RSC**) | Data fetched (and individually degraded) in `app/page.tsx`. |
+| `HomeFeed` (`home-feed.tsx`) | Followed-travelers feed: staggered cards, bylines, load-more, empty state | `initialItems`, `initialCursor`, `followsNobody` | `social-api`, `TripCard` | ✅ | Reduced-motion-safe. |
 
 ---
 
@@ -97,8 +119,12 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 
 | Component | Purpose | Key props | Deps | Reusable | Notes |
 |---|---|---|---|---|---|
-| `FollowButton` (`follow-button.tsx`) | Fetch relationship + follow/unfollow; self/signed-out states | `username` | Clerk, **raw `fetch`** | ✅ | ⚠ **Uses ad-hoc `fetch`, not the shared client** (WV-105). |
-| `TripCard` (`trip-card.tsx`) | Presentational trip card | `trip: FeedTrip` | `cn` | ✅ (**RSC**) | Reused by profiles **and** DiscoverGallery. Local `formatRange` overlaps `utils` date fns. |
+| `FollowButton` (`follow-button.tsx`) | Fetch relationship + follow/unfollow; self/signed-out states | `username` | Clerk, `social-api` | ✅ | ~~ad-hoc fetch~~ → now uses `lib/social-api.ts` (WV-105 resolved). |
+| `TripCard` (`trip-card.tsx`) | Presentational trip card | `trip: FeedTrip` | `cn`, `mediaSrc` | ✅ (**RSC**) | Reused by profiles, DiscoverGallery **and HomeFeed**. Local `formatRange` overlaps `utils` date fns. |
+| `ProfileEditor` (`profile-editor.tsx`) | Edit own profile: displayName/username/bio/location/website/avatar | none | `users-api`, Clerk | ⚠ | Page: `app/settings/profile`. Inline 409 "username taken" under the field. |
+| `ClaimUsernameBanner` (`claim-username-banner.tsx`) | Onboarding nudge until a username exists | none | `use-me` | ✅ | Mounted on dashboard + personal home; sessionStorage dismiss. |
+| `UserList` (`user-list.tsx`) | Follower/following rows w/ FollowButton | `users`, `emptyMessage` | `FollowButton` | ✅ (**RSC**) | Pages: `profiles/[username]/followers` + `/following`. |
+| `EditProfileLink` (`edit-profile-link.tsx`) | "Edit profile" button when viewing own profile | `username` | `use-my-username` | ✅ | — |
 
 ---
 

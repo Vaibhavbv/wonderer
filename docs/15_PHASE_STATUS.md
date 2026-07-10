@@ -4,15 +4,31 @@
 
 ---
 
-**Last updated:** 2026-07-03
-**Current phase:** **Phase 0 — Repository Foundation & AI-Readiness — ✅ COMPLETE (final verification passed)**
+**Last updated:** 2026-07-10
+**Current phase:** **Flagship travel-journal upgrade — ✅ COMPLETE** (user-directed feature pass; supersedes the "await Phase 1 kickoff" hold — the user explicitly requested this work)
 **Release line:** V2 (`v2` branch exists on origin)
-**Working branch for this effort:** `phase-0/repo-foundation`
-**Completion report:** [`PHASE_0_COMPLETION_REPORT.md`](./PHASE_0_COMPLETION_REPORT.md)
+**Working branch for this effort:** `claude/init-ke8snz`
+**Previous milestone:** Phase 0 complete — [`PHASE_0_COMPLETION_REPORT.md`](./PHASE_0_COMPLETION_REPORT.md)
 
 ---
 
-## Current Phase — Phase 0
+## Current effort — Flagship travel-journal upgrade (2026-07-10) ✅ COMPLETE
+
+**Objective (user-directed):** make the site a flagship travel journal with a personal signed-in experience. Full detail in [`20_CHANGELOG.md`](./20_CHANGELOG.md) (top entry) + ADR-016/017.
+
+**Now LIVE (all verified: api build/lint/72 tests ✓, web type-check/62 tests/build ✓):**
+- **Personal homepage** — signed-in users get greeting/stats/continue-draft + a followed-travelers feed (`GET /v1/feed` now consumed); signed-out gets the demo journey + marketing sections + CTA. Env-guarded `auth()` branch (ADR-017).
+- **Trip editing & publish** — `/trips/[id]/edit`: metadata, visibility, publish/unpublish, cover, photo add/delete, and full itinerary CRUD backed by the **new locations API** (`/v1/trips/:id/locations…`, ADR-016). Dashboard drafts publish in one click; Share works.
+- **Journal + AI** — `/trips/[id]/journal` block editor over the story API, with an AI assistant (generate-story tone/length, title suggestions, job polling, credit-exhaustion handling).
+- **Profile & onboarding** — `/settings/profile` (username 409-aware), claim-username banner, follower/following pages, clickable profile counts.
+- **Shell polish** — Playfair font wiring fixed (was silently Georgia), nav IA (+Pricing/About, "Inspiration"), footer dead links removed, branded loading/error/404, dashboard error≠empty, destinations framed as demo, `mediaSrc()` everywhere.
+- **Frontend API layer consolidated** — `lib/api.ts` is the single `unwrap`/`authHeaders` source (this resolves the WV-105 duplication ticket); new wrappers: social/users/story/ai/upload.
+
+**Still NOT built (unchanged):** payments/webhooks/analytics/exports stubs, media `/process`/thumbnails, geocoding (WV-301), AI photo-enhance, S3 delete leak (WV-107), Clerk webhook sync (WV-201).
+
+---
+
+## Previous phase — Phase 0 (Repository Foundation) ✅
 
 **Objective:** Make the repository self-documenting and clean so AI assistants can work with minimal re-explanation. **No features, no redesign, no new Three.js, no new animations.**
 
@@ -20,7 +36,7 @@ Full plan: [`07_ROADMAP.md`](./07_ROADMAP.md).
 
 ---
 
-## Completed Work ✅
+## Completed Work ✅ (Phase 0)
 
 - **Full architecture audit** — backend (`apps/api`) and frontend (`apps/web`) audited in depth (modules, endpoints, schema, components, deps, dead code, security gaps).
 - **Documentation set `/docs/00–20`** authored and grounded in the audit + [`MASTERPLAN.md`](./MASTERPLAN.md).
@@ -47,7 +63,7 @@ Full plan: [`07_ROADMAP.md`](./07_ROADMAP.md).
 
 ## In Progress 🔄
 
-None — **Phase 0 is COMPLETE and verified.** Awaiting explicit Phase 1 kickoff from the user.
+None — the flagship travel-journal upgrade is complete and verified on `claude/init-ke8snz`.
 
 ---
 
@@ -95,7 +111,7 @@ Detail: [`07_ROADMAP.md`](./07_ROADMAP.md).
 
 ## Snapshot: what works vs. what's scaffolding (as of last update)
 
-**Works end-to-end:** auth (Clerk), profiles, trip CRUD + duplicate + like, image upload (S3), dashboard, social graph (follow/feed/discover), comments, notifications, the Wander View (real + demo), AI story/title generation.
+**Works end-to-end:** auth (Clerk), profiles **+ profile editing/username claim + follower pages**, trip CRUD + duplicate + like **+ full trip editing (metadata/publish/cover/photos/locations) + share**, image upload (S3) **at create time and afterwards**, dashboard, **personal home + followed-users feed**, social graph (follow/feed/discover), comments, notifications, the Wander View (real + demo), AI story/title generation **+ the journal editor UI that consumes them**.
 
 **Empty stubs / placeholders (DON'T assume these work):** payments, webhooks, analytics, exports (empty modules); Mapbox geocoding, AI photo-enhance, media `/process` (placeholders); dead schema (`Session`, `Invoice`, `Export`, `UserActivity`, `MapTileCache`, `Challenge`, `ChallengeEntry`).
 
