@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { CreateTripButton } from "@/components/dashboard/create-trip-button";
+import { ClaimUsernameBanner } from "@/components/profile/claim-username-banner";
 import { HomeFeed } from "@/components/home/home-feed";
 import type { TripSummary } from "@/lib/trip-api";
 import type { FeedTrip, Paginated } from "@/lib/api";
@@ -33,6 +34,7 @@ export function PersonalHome({ me, trips, tripsTotal, feed }: PersonalHomeProps)
       <Navbar />
       <main className="pt-28 pb-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <ClaimUsernameBanner />
           {/* Greeting */}
           <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>

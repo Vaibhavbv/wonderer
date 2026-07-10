@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { TripGrid } from "@/components/dashboard/trip-grid";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { CreateTripButton } from "@/components/dashboard/create-trip-button";
+import { ClaimUsernameBanner } from "@/components/profile/claim-username-banner";
 import { getTrips, type TripSummary } from "@/lib/trip-api";
 
 export default async function DashboardPage() {
@@ -34,6 +35,7 @@ export default async function DashboardPage() {
       <Navbar />
       <main className="pt-20 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ClaimUsernameBanner />
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="font-heading text-3xl font-bold text-text-primary">Your Trips</h1>

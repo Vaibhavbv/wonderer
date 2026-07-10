@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { TripCard } from "@/components/profile/trip-card";
 import { FollowButton } from "@/components/profile/follow-button";
+import { EditProfileLink } from "@/components/profile/edit-profile-link";
 import { getProfile, getProfileTrips, ApiError } from "@/lib/api";
 
 export async function generateMetadata({
@@ -72,6 +74,7 @@ export default async function ProfilePage({
                   {profile.displayName || `@${profile.username}`}
                 </h1>
                 <FollowButton username={username} />
+                <EditProfileLink username={username} />
               </div>
               {profile.username && (
                 <p className="text-text-tertiary text-sm mt-0.5">@{profile.username}</p>
@@ -83,8 +86,14 @@ export default async function ProfilePage({
 
               <div className="flex gap-6 mt-4 text-sm">
                 <span><strong className="text-text-primary">{profile.stats.tripsCount}</strong> <span className="text-text-secondary">trips</span></span>
-                <span><strong className="text-text-primary">{profile.stats.followersCount}</strong> <span className="text-text-secondary">followers</span></span>
-                <span><strong className="text-text-primary">{profile.stats.followingCount}</strong> <span className="text-text-secondary">following</span></span>
+                <Link href={`/profiles/${username}/followers`} className="transition-colors hover:text-primary-600">
+                  <strong className="text-text-primary">{profile.stats.followersCount}</strong>{" "}
+                  <span className="text-text-secondary">followers</span>
+                </Link>
+                <Link href={`/profiles/${username}/following`} className="transition-colors hover:text-primary-600">
+                  <strong className="text-text-primary">{profile.stats.followingCount}</strong>{" "}
+                  <span className="text-text-secondary">following</span>
+                </Link>
                 <span><strong className="text-text-primary">{profile.stats.totalLikes}</strong> <span className="text-text-secondary">likes</span></span>
               </div>
             </div>
