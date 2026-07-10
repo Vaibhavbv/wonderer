@@ -133,7 +133,7 @@ Entries **ADR-000..ADR-008** are *reconstructed* from the audited codebase (they
 ### ADR-017 — Homepage branches on auth in the server component, env-guarded
 - **Date:** 2026-07-10 · **Status:** Accepted
 - **Context:** The homepage played the same hardcoded demo journey for everyone. The personal experience needed a signed-in variant without breaking the "public site boots without Clerk" guarantee — `middleware.ts` only mounts `clerkMiddleware()` when `CLERK_SECRET_KEY` is set, and `auth()` throws when the middleware never ran.
-- **Decision:** Keep one route. `app/page.tsx` returns `<MarketingHome/>` when `CLERK_SECRET_KEY` is unset or the visitor is signed out, `<PersonalHome/>` otherwise. No middleware rewrites, no separate route groups. The personal home's data fetches (`getMyProfile`/`getTrips`/`getFeed`) are individually `.catch`ed so one failing call degrades only its section.
+- **Decision:** Keep one route. `app/page.tsx` returns `<MarketingHome/>` when `CLERK_SECRET_KEY` is unset or the visitor is signed out, `<PersonalHome/>` otherwise. No middleware rewrites, no separate route groups. The personal home's data fetches (`getMyProfile`/`getTrips`/`getFeed`) are individually `.catch`ed so one failing call degrades only its section. *(Post-merge with #18: MarketingHome composes the lightweight `landing/hero.tsx` + sections — the 3D journey stays paused on marketing surfaces and lives only at `/trips/[id]/wander`.)*
 - **Tradeoffs:** ➖ `/` becomes a dynamic route (no static prerender) whenever Clerk is configured; ➕ single URL for both audiences, zero routing indirection, and the env guard preserves the no-Clerk boot path.
 
 *(Add ADR-018+ below as decisions are made.)*

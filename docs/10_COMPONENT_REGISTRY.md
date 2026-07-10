@@ -100,7 +100,7 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 
 | Component | Purpose | Key props | Deps | Reusable | Notes |
 |---|---|---|---|---|---|
-| `MarketingHome` (`marketing-home.tsx`) | Signed-out home: demo journey + landing sections + footer | none | `JourneyExperience`, `landing/*` | ⚠ (**RSC**) | ADR-017. |
+| `MarketingHome` (`marketing-home.tsx`) | Signed-out home: lightweight landing (Hero + sections + footer, no WebGL per #18) | none | `landing/*` | ⚠ (**RSC**) | ADR-017. 3D journey remains only at `/trips/[id]/wander`. |
 | `PersonalHome` (`personal-home.tsx`) | Signed-in home: greeting, stats, continue-draft card, feed | `me`, `trips`, `tripsTotal`, `feed` | `StatsCards`, `HomeFeed`, `ClaimUsernameBanner` | ⚠ (**RSC**) | Data fetched (and individually degraded) in `app/page.tsx`. |
 | `HomeFeed` (`home-feed.tsx`) | Followed-travelers feed: staggered cards, bylines, load-more, empty state | `initialItems`, `initialCursor`, `followsNobody` | `social-api`, `TripCard` | ✅ | Reduced-motion-safe. |
 

@@ -17,7 +17,7 @@
 **Objective (user-directed):** make the site a flagship travel journal with a personal signed-in experience. Full detail in [`20_CHANGELOG.md`](./20_CHANGELOG.md) (top entry) + ADR-016/017.
 
 **Now LIVE (all verified: api build/lint/72 tests ✓, web type-check/62 tests/build ✓):**
-- **Personal homepage** — signed-in users get greeting/stats/continue-draft + a followed-travelers feed (`GET /v1/feed` now consumed); signed-out gets the demo journey + marketing sections + CTA. Env-guarded `auth()` branch (ADR-017).
+- **Personal homepage** — signed-in users get greeting/stats/continue-draft + a followed-travelers feed (`GET /v1/feed` now consumed); signed-out gets the lightweight marketing landing (Hero + sections + CTA; 3D paused on marketing surfaces per #18, still live in the wander view). Env-guarded `auth()` branch (ADR-017).
 - **Trip editing & publish** — `/trips/[id]/edit`: metadata, visibility, publish/unpublish, cover, photo add/delete, and full itinerary CRUD backed by the **new locations API** (`/v1/trips/:id/locations…`, ADR-016). Dashboard drafts publish in one click; Share works.
 - **Journal + AI** — `/trips/[id]/journal` block editor over the story API, with an AI assistant (generate-story tone/length, title suggestions, job polling, credit-exhaustion handling).
 - **Profile & onboarding** — `/settings/profile` (username 409-aware), claim-username banner, follower/following pages, clickable profile counts.
