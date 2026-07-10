@@ -10,7 +10,8 @@ import { Magnetic } from "@/components/ui/magnetic";
 const links = [
   { label: "Home", href: "/" },
   { label: "Discover", href: "/discover" },
-  { label: "Destinations", href: "/destinations" },
+  { label: "Inspiration", href: "/destinations" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 export function JourneyNav({ accent }: { accent: string }) {

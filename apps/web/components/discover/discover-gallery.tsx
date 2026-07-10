@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Heart, Eye } from "lucide-react";
 import type { FeedTrip } from "@/lib/api";
+import { mediaSrc } from "@/lib/utils";
 import { TripCard } from "@/components/profile/trip-card";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { TextReveal } from "@/components/ui/text-reveal";
@@ -60,9 +61,9 @@ export function DiscoverGallery({ trips }: { trips: FeedTrip[] }) {
               </button>
 
               <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-100">
-                {selected.coverPhoto?.originalUrl && (
+                {selected.coverPhoto && (
                   <img
-                    src={selected.coverPhoto.originalUrl}
+                    src={mediaSrc(selected.coverPhoto)}
                     alt={selected.title}
                     className="h-full w-full object-cover"
                   />

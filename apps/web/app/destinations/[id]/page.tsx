@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Calendar, Clock, Heart, CloudSun, Sparkles } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { Calendar, Clock, Heart, CloudSun, Sparkles, PenLine } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { Button } from "@/components/ui/button";
 import { journey, getDestination } from "@/lib/journey-data";
 
 export function generateStaticParams() {
@@ -85,9 +88,34 @@ export default async function DestinationPage({
             </div>
           )}
 
-          <p className="mt-10 text-sm text-text-tertiary">
-            The full trip story for {dest.name} — photos, route, and day-by-day detail — is coming soon.
-          </p>
+          <div className="mt-10 rounded-2xl border border-border bg-surface p-6 text-center">
+            <p className="text-xs uppercase tracking-widest text-primary-600">Demo journey</p>
+            <h2 className="mt-2 font-heading text-2xl text-text-primary">
+              Your {dest.name} could look like this
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-text-secondary">
+              This stop is part of our demo journey. Map your own travels and every place you&apos;ve
+              been gets the same cinematic treatment.
+            </p>
+            <div className="mt-5">
+              <SignedIn>
+                <Link href="/dashboard">
+                  <Button>
+                    <PenLine className="mr-2 h-4 w-4" />
+                    Create a trip like this
+                  </Button>
+                </Link>
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button>
+                    <PenLine className="mr-2 h-4 w-4" />
+                    Start your own journey
+                  </Button>
+                </SignInButton>
+              </SignedOut>
+            </div>
+          </div>
         </div>
       </main>
       <Footer />

@@ -26,7 +26,12 @@ export default async function DiscoverPage() {
           </header>
 
           {trips.length === 0 ? (
-            <p className="text-text-secondary">No public trips yet — be the first to share one.</p>
+            <div className="rounded-2xl border border-dashed border-border px-8 py-20 text-center">
+              <h2 className="font-heading text-2xl text-text-primary">The world is waiting for its first story</h2>
+              <p className="mx-auto mt-2 max-w-md text-text-secondary">
+                No public journeys yet. Publish one of yours and it will headline this page.
+              </p>
+            </div>
           ) : (
             <>
               <div className="mb-12">

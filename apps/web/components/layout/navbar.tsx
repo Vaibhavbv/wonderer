@@ -52,8 +52,18 @@ export function Navbar() {
               Discover
             </Link>
             <Link href="/destinations" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
-              Destinations
+              Inspiration
             </Link>
+            {!isSignedIn && (
+              <>
+                <Link href="/pricing" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+                  Pricing
+                </Link>
+                <Link href="/about" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+                  About
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Desktop Actions */}
@@ -102,8 +112,18 @@ export function Navbar() {
               Discover
             </Link>
             <Link href="/destinations" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
-              Destinations
+              Inspiration
             </Link>
+            {!isSignedIn && (
+              <>
+                <Link href="/pricing" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
+                  Pricing
+                </Link>
+                <Link href="/about" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
+                  About
+                </Link>
+              </>
+            )}
             <div className="pt-3 border-t border-border flex gap-3">
               {isSignedIn ? (
                 <>

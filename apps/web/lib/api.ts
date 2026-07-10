@@ -84,7 +84,7 @@ export interface FeedTrip {
   commentsCount: number;
   viewsCount: number;
   createdAt: string;
-  coverPhoto: { id: string; variants: unknown; originalUrl: string } | null;
+  coverPhoto: { id: string; variants: Record<string, { url: string }> | null; originalUrl: string } | null;
   locations: TripLocation[];
   user: PublicUser;
 }

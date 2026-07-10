@@ -13,6 +13,7 @@ export default async function DashboardPage() {
 
   let trips: TripSummary[] = [];
   let total = 0;
+  let loadFailed = false;
   try {
     const token = await getToken();
     if (token) {
@@ -21,7 +22,9 @@ export default async function DashboardPage() {
       total = res.total;
     }
   } catch {
-    // API unreachable — render an empty dashboard rather than crashing the page.
+    // API unreachable — show an explicit error panel; "couldn't load" must
+    // not masquerade as "you have no trips".
+    loadFailed = true;
   }
 
   const photos = trips.reduce((sum, t) => sum + (t.photosCount || 0), 0);
@@ -43,10 +46,22 @@ export default async function DashboardPage() {
             </div>
             <CreateTripButton />
           </div>
-          <StatsCards stats={{ trips: total, photos, stories, countries }} />
-          <div className="mt-10">
-            <TripGrid trips={trips} />
-          </div>
+          {loadFailed ? (
+            <div className="rounded-2xl border border-error/30 bg-error/5 px-8 py-16 text-center">
+              <h2 className="font-heading text-2xl text-text-primary">We couldn&apos;t reach your trips</h2>
+              <p className="mx-auto mt-2 max-w-md text-text-secondary">
+                The journey server didn&apos;t answer. Your trips are safe — give it a moment and{" "}
+                <a href="/dashboard" className="text-primary-600 underline underline-offset-2">reload</a>.
+              </p>
+            </div>
+          ) : (
+            <>
+              <StatsCards stats={{ trips: total, photos, stories, countries }} />
+              <div className="mt-10">
+                <TripGrid trips={trips} />
+              </div>
+            </>
+          )}
         </div>
       </main>
     </div>

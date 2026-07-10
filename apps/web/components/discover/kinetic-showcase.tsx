@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useVelocity, useSpring, useTransform } from "framer-motion";
 import type { FeedTrip } from "@/lib/api";
+import { mediaSrc } from "@/lib/utils";
 
 const SIZES = ["w-72 h-80", "w-96 h-64", "w-64 h-96", "w-80 h-72"];
 
@@ -47,7 +48,7 @@ export function KineticShowcase({ trips }: { trips: FeedTrip[] }) {
       >
         <motion.div ref={trackRef} style={{ skewX, scaleX }} className="flex gap-5 pb-2 origin-left">
           {trips.map((trip, i) => {
-            const cover = trip.coverPhoto?.originalUrl;
+            const cover = trip.coverPhoto ? mediaSrc(trip.coverPhoto, "medium") : null;
             const place = trip.locations[0];
             return (
               <div

@@ -6,8 +6,8 @@ import { DestinationsGlobe } from "@/components/journey/destinations-globe";
 import { journey } from "@/lib/journey-data";
 
 export const metadata: Metadata = {
-  title: "Destinations — Wanderverse",
-  description: "Every stop on the journey, from Delhi to the Alps.",
+  title: "Inspiration — Wanderverse",
+  description: "A demo journey showing what your trips become on Wanderverse.",
 };
 
 export default function DestinationsPage() {
@@ -17,9 +17,11 @@ export default function DestinationsPage() {
       <main className="pt-28 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <header className="mb-10 max-w-2xl">
-            <h1 className="font-heading text-4xl sm:text-5xl text-text-primary">Destinations</h1>
+            <p className="text-sm uppercase tracking-widest text-primary-600">Inspiration</p>
+            <h1 className="mt-2 font-heading text-4xl sm:text-5xl text-text-primary">One journey, told the Wanderverse way</h1>
             <p className="mt-3 text-lg text-text-secondary">
-              Every stop on the journey, from Delhi to the Alps.
+              A demo trip from Delhi to the Alps showing what your own travels become — every stop below is
+              a taste of the cinematic story your trips get.
             </p>
           </header>
 
