@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { followUser, getRelationship, unfollowUser } from "@/lib/social-api";
 
 export function FollowButton({ username }: { username: string }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -18,13 +17,11 @@ export function FollowButton({ username }: { username: string }) {
     (async () => {
       try {
         const token = await getToken();
-        const res = await fetch(`${API_URL}/v1/profiles/${encodeURIComponent(username)}/relationship`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await res.json();
-        if (active && json?.data) {
-          setFollowing(Boolean(json.data.isFollowing));
-          setIsSelf(Boolean(json.data.isSelf));
+        if (!token) return;
+        const rel = await getRelationship(token, username);
+        if (active) {
+          setFollowing(rel.isFollowing);
+          setIsSelf(rel.isSelf);
         }
       } catch {
         /* ignore — leave default state */
@@ -53,12 +50,16 @@ export function FollowButton({ username }: { username: string }) {
     setBusy(true);
     try {
       const token = await getToken();
-      const method = following ? "DELETE" : "POST";
-      const res = await fetch(`${API_URL}/v1/profiles/${encodeURIComponent(username)}/follow`, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) setFollowing(!following);
+      if (!token) return;
+      if (following) {
+        await unfollowUser(token, username);
+        setFollowing(false);
+      } else {
+        await followUser(token, username);
+        setFollowing(true);
+      }
+    } catch {
+      /* keep previous state on failure */
     } finally {
       setBusy(false);
     }

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { TripsService } from './trips.service';
 import { PrismaService } from '@prisma/prisma.service';
@@ -20,6 +20,7 @@ describe('TripsService', () => {
     tripLocation: Record<string, jest.Mock>;
     tripCollaborator: Record<string, jest.Mock>;
     media: Record<string, jest.Mock>;
+    $transaction: jest.Mock;
   };
   let notifications: { create: jest.Mock };
 
@@ -44,6 +45,12 @@ describe('TripsService', () => {
       },
       tripLocation: {
         count: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        aggregate: jest.fn(),
       },
       tripCollaborator: {
         findUnique: jest.fn(),
@@ -51,6 +58,7 @@ describe('TripsService', () => {
       media: {
         aggregate: jest.fn(),
       },
+      $transaction: jest.fn().mockResolvedValue([]),
     };
     notifications = { create: jest.fn() };
 
@@ -203,6 +211,166 @@ describe('TripsService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         data: { tripCount: { decrement: 1 } },
+      });
+    });
+  });
+
+  describe('locations CRUD', () => {
+    const ownTrip = { id: 'trip-1', userId: 'user-1', privacy: 'PRIVATE', tags: ['japan'] };
+
+    describe('addLocation', () => {
+      it('throws ForbiddenException for a non-owner with no collaborator record', async () => {
+        prisma.trip.findUnique.mockResolvedValue({ ...ownTrip, userId: 'owner' });
+        prisma.tripCollaborator.findUnique.mockResolvedValue(null);
+
+        await expect(
+          service.addLocation('user-1', 'trip-1', { name: 'Kyoto', latitude: 35, longitude: 135 }),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it('throws ForbiddenException for a VIEWER collaborator', async () => {
+        prisma.trip.findUnique.mockResolvedValue({ ...ownTrip, userId: 'owner' });
+        prisma.tripCollaborator.findUnique.mockResolvedValue({ role: 'VIEWER' });
+
+        await expect(
+          service.addLocation('user-1', 'trip-1', { name: 'Kyoto', latitude: 35, longitude: 135 }),
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it('allows an EDITOR collaborator and appends after the highest order', async () => {
+        prisma.trip.findUnique.mockResolvedValue({ ...ownTrip, userId: 'owner' });
+        prisma.tripCollaborator.findUnique.mockResolvedValue({ role: 'EDITOR' });
+        prisma.tripLocation.aggregate.mockResolvedValue({ _max: { order: 2 } });
+        prisma.tripLocation.create.mockResolvedValue({ id: 'loc-4', order: 3 });
+
+        await service.addLocation('user-1', 'trip-1', { name: 'Kyoto', latitude: 35, longitude: 135 });
+
+        const createArgs = prisma.tripLocation.create.mock.calls[0][0];
+        expect(createArgs.data.order).toBe(3);
+        expect(createArgs.data.theme).toBeDefined();
+      });
+
+      it('starts order at 0 for a trip with no locations', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.aggregate.mockResolvedValue({ _max: { order: null } });
+        prisma.tripLocation.create.mockResolvedValue({ id: 'loc-1', order: 0 });
+
+        await service.addLocation('user-1', 'trip-1', { name: 'Kyoto', latitude: 35, longitude: 135 });
+
+        expect(prisma.tripLocation.create.mock.calls[0][0].data.order).toBe(0);
+      });
+    });
+
+    describe('updateLocation', () => {
+      it('404s for a location that belongs to another trip', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findUnique.mockResolvedValue({ id: 'loc-1', tripId: 'other-trip' });
+
+        await expect(
+          service.updateLocation('user-1', 'trip-1', 'loc-1', { name: 'Osaka' }),
+        ).rejects.toThrow(NotFoundException);
+      });
+
+      it('updates only provided fields and recomputes theme when the name changes', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findUnique.mockResolvedValue({
+          id: 'loc-1',
+          tripId: 'trip-1',
+          name: 'Kyoto',
+          country: 'JP',
+        });
+        prisma.tripLocation.update.mockResolvedValue({ id: 'loc-1' });
+
+        await service.updateLocation('user-1', 'trip-1', 'loc-1', { name: 'Osaka' });
+
+        const updateArgs = prisma.tripLocation.update.mock.calls[0][0];
+        expect(updateArgs.data.name).toBe('Osaka');
+        expect(updateArgs.data.theme).toBeDefined();
+        expect(updateArgs.data.latitude).toBeUndefined();
+      });
+
+      it('does not recompute theme when only coordinates change', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findUnique.mockResolvedValue({
+          id: 'loc-1',
+          tripId: 'trip-1',
+          name: 'Kyoto',
+          country: 'JP',
+        });
+        prisma.tripLocation.update.mockResolvedValue({ id: 'loc-1' });
+
+        await service.updateLocation('user-1', 'trip-1', 'loc-1', { latitude: 35.01, longitude: 135.76 });
+
+        expect(prisma.tripLocation.update.mock.calls[0][0].data.theme).toBeUndefined();
+      });
+    });
+
+    describe('removeLocation', () => {
+      it('404s for a location that belongs to another trip', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findUnique.mockResolvedValue({ id: 'loc-1', tripId: 'other-trip' });
+
+        await expect(service.removeLocation('user-1', 'trip-1', 'loc-1')).rejects.toThrow(
+          NotFoundException,
+        );
+      });
+
+      it('deletes and re-compacts the order of remaining locations', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findUnique.mockResolvedValue({ id: 'loc-2', tripId: 'trip-1' });
+        prisma.tripLocation.delete.mockResolvedValue({});
+        // After deleting the middle stop, orders 0 and 2 remain.
+        prisma.tripLocation.findMany.mockResolvedValue([
+          { id: 'loc-1', order: 0 },
+          { id: 'loc-3', order: 2 },
+        ]);
+
+        const result = await service.removeLocation('user-1', 'trip-1', 'loc-2');
+
+        expect(result).toEqual({ deleted: true });
+        expect(prisma.tripLocation.delete).toHaveBeenCalledWith({ where: { id: 'loc-2' } });
+        // Only the gap (loc-3: 2 -> 1) needs an update.
+        expect(prisma.tripLocation.update).toHaveBeenCalledTimes(1);
+        expect(prisma.tripLocation.update).toHaveBeenCalledWith({
+          where: { id: 'loc-3' },
+          data: { order: 1 },
+        });
+      });
+    });
+
+    describe('reorderLocations', () => {
+      it('rejects an id set that does not match the trip exactly', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findMany.mockResolvedValue([{ id: 'loc-1' }, { id: 'loc-2' }]);
+
+        await expect(
+          service.reorderLocations('user-1', 'trip-1', { locationIds: ['loc-1'] }),
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          service.reorderLocations('user-1', 'trip-1', { locationIds: ['loc-1', 'loc-x'] }),
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          service.reorderLocations('user-1', 'trip-1', { locationIds: ['loc-1', 'loc-1'] }),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('writes order = index for the requested sequence', async () => {
+        prisma.trip.findUnique.mockResolvedValue(ownTrip);
+        prisma.tripLocation.findMany
+          .mockResolvedValueOnce([{ id: 'loc-1' }, { id: 'loc-2' }])
+          .mockResolvedValueOnce([{ id: 'loc-2' }, { id: 'loc-1' }]);
+        prisma.tripLocation.update.mockResolvedValue({});
+
+        await service.reorderLocations('user-1', 'trip-1', { locationIds: ['loc-2', 'loc-1'] });
+
+        expect(prisma.tripLocation.update).toHaveBeenCalledWith({
+          where: { id: 'loc-2' },
+          data: { order: 0 },
+        });
+        expect(prisma.tripLocation.update).toHaveBeenCalledWith({
+          where: { id: 'loc-1' },
+          data: { order: 1 },
+        });
       });
     });
   });

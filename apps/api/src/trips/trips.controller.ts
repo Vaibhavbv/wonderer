@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, UseGuards, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { TripsService } from './trips.service';
 import { ClerkAuthGuard } from '@common/guards/clerk-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { Pagination } from '@common/decorators/pagination.decorator';
-import { CreateTripDto, UpdateTripDto, TripListQueryDto } from './trips.dto';
+import { CreateTripDto, UpdateTripDto, TripListQueryDto, CreateLocationDto, UpdateLocationDto, ReorderLocationsDto } from './trips.dto';
 
 @ApiTags('Trips')
 @ApiBearerAuth()
@@ -67,6 +67,50 @@ export class TripsController {
   @ApiOperation({ summary: 'Get trip statistics' })
   async getTripStats(@CurrentUser('id') userId: string, @Param('id') tripId: string) {
     return this.tripsService.getTripStats(userId, tripId);
+  }
+
+  @Post(':id/locations')
+  @ApiOperation({ summary: 'Add a location to a trip' })
+  async addLocation(
+    @CurrentUser('id') userId: string,
+    @Param('id') tripId: string,
+    @Body() dto: CreateLocationDto,
+  ) {
+    return this.tripsService.addLocation(userId, tripId, dto);
+  }
+
+  // 'order' can't be shadowed by :locationId — the param routes use
+  // PATCH/DELETE while this is the only PUT under /locations.
+  @Put(':id/locations/order')
+  @ApiOperation({ summary: 'Reorder all locations of a trip' })
+  async reorderLocations(
+    @CurrentUser('id') userId: string,
+    @Param('id') tripId: string,
+    @Body() dto: ReorderLocationsDto,
+  ) {
+    return this.tripsService.reorderLocations(userId, tripId, dto);
+  }
+
+  @Patch(':id/locations/:locationId')
+  @ApiOperation({ summary: 'Update a trip location' })
+  async updateLocation(
+    @CurrentUser('id') userId: string,
+    @Param('id') tripId: string,
+    @Param('locationId') locationId: string,
+    @Body() dto: UpdateLocationDto,
+  ) {
+    return this.tripsService.updateLocation(userId, tripId, locationId, dto);
+  }
+
+  @Delete(':id/locations/:locationId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove a location from a trip' })
+  async removeLocation(
+    @CurrentUser('id') userId: string,
+    @Param('id') tripId: string,
+    @Param('locationId') locationId: string,
+  ) {
+    return this.tripsService.removeLocation(userId, tripId, locationId);
   }
 
   @Post(':id/like')

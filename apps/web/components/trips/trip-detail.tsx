@@ -2,20 +2,17 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Edit, Play, Image as ImageIcon, Share2, MessageCircle } from "lucide-react";
+import { MapPin, Calendar, Edit, Play, BookOpen, Image as ImageIcon, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LikeButton } from "@/components/trips/like-button";
+import { ShareButton } from "@/components/trips/share-button";
 import { CommentThread } from "@/components/trips/comment-thread";
-import { formatDate } from "@/lib/utils";
-import type { TripRecord, TripMediaRecord } from "@/lib/trip-api";
+import { formatDate, mediaSrc } from "@/lib/utils";
+import type { TripRecord } from "@/lib/trip-api";
 
-function mediaUrl(m: TripMediaRecord): string {
-  return m.variants?.large?.url || m.variants?.medium?.url || m.originalUrl;
-}
-
-export function TripDetail({ trip }: { trip: TripRecord }) {
+export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; viewerIsOwner?: boolean }) {
   const images = trip.media.filter((m) => m.type === "IMAGE");
-  const cover = trip.coverPhoto ? mediaUrl(trip.coverPhoto) : images[0] ? mediaUrl(images[0]) : null;
+  const cover = trip.coverPhoto ? mediaSrc(trip.coverPhoto) : images[0] ? mediaSrc(images[0]) : null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -91,13 +88,21 @@ export function TripDetail({ trip }: { trip: TripRecord }) {
             </Button>
           </Link>
           <LikeButton tripId={trip.id} initialLiked={trip.isLiked} initialCount={trip.likesCount} />
-          <Button variant="outline" size="sm">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Share2 className="w-4 h-4" />
-          </Button>
+          <Link href={`/trips/${trip.id}/journal`}>
+            <Button variant="outline" size="sm">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Journal
+            </Button>
+          </Link>
+          {viewerIsOwner && (
+            <Link href={`/trips/${trip.id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            </Link>
+          )}
+          <ShareButton tripId={trip.id} privacy={trip.privacy} viewerIsOwner={viewerIsOwner} />
         </div>
       </motion.div>
 
@@ -139,7 +144,7 @@ export function TripDetail({ trip }: { trip: TripRecord }) {
             {images.map((m) => (
               <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-secondary-100">
                 <img
-                  src={mediaUrl(m)}
+                  src={mediaSrc(m, "medium")}
                   alt={m.caption || "Trip photo"}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />

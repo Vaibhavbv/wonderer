@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsDateString, IsObject, IsNumber, ValidateNested, ArrayMinSize, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsEnum, IsDateString, IsObject, IsNumber, ValidateNested, ArrayMinSize, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -135,6 +135,92 @@ export class UpdateTripDto {
   @IsOptional()
   @IsString()
   coverPhotoId?: string;
+}
+
+// Post-create location management. Unlike the nested create-time LocationDto,
+// coordinates are required here: the whole point of editing a stop after the
+// fact is placing its pin correctly on the journey globe.
+export class CreateLocationDto {
+  @ApiProperty({ maxLength: 200 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  name: string;
+
+  @ApiProperty({ minimum: -90, maximum: 90 })
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude: number;
+
+  @ApiProperty({ minimum: -180, maximum: 180 })
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ description: 'The traveler\'s memory/story for this stop' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
+}
+
+export class UpdateLocationDto {
+  @ApiPropertyOptional({ maxLength: 200 })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  name?: string;
+
+  @ApiPropertyOptional({ minimum: -90, maximum: 90 })
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @ApiPropertyOptional({ minimum: -180, maximum: 180 })
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
+}
+
+export class ReorderLocationsDto {
+  @ApiProperty({ type: [String], description: 'Every location id of the trip, in the desired order' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  locationIds: string[];
 }
 
 export class TripListQueryDto {

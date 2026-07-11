@@ -6,6 +6,33 @@ Categories: **Added · Changed · Fixed · Removed · Deprecated · Security · 
 
 ---
 
+## [Unreleased] — Flagship travel-journal upgrade (2026-07-10)
+
+Full-stack feature pass making the product a personal travel journal: every real-but-unsurfaced backend capability (feed, story editor, AI generation, profile editing, publish/privacy, follower lists) gained UI, plus the one missing API (post-create location editing) was added. See ADR-016/017.
+
+### Added
+- **Locations API** — `POST/PATCH/DELETE /v1/trips/:id/locations(/:locationId)` + `PUT .../locations/order`; owner-or-EDITOR guard extracted to `getEditableTrip` (read vs write checks now distinct). Coordinates required + range-validated on add. Specs in `trips.service.spec.ts`.
+- **Personal homepage** — `app/page.tsx` branches on auth (env-guarded so the site boots without Clerk): signed-out gets the lightweight marketing landing (Hero + sections + CTA — 3D stays paused on marketing surfaces per #18); signed-in gets greeting, own stats, continue-draft card, and a feed from followed travelers (`GET /v1/feed`, first consumer) with load-more and a personality empty state.
+- **Trip editor** — `/trips/[id]/edit` (owner-gated): details/dates/tags/visibility, publish/unpublish, cover picker, add/delete photos, full itinerary CRUD with lat/lng inputs, two-step trip delete. Dashboard DRAFT badge is now a one-click publish; cards have an edit shortcut. Share button works (clipboard + private-trip "make unlisted & copy" shortcut).
+- **Journal editor + AI** — `/trips/[id]/journal`: block editor (hero/heading/text/photo; unknown block types preserved verbatim — PUT is full-replace), preview mode, versioned sticky save bar, beforeunload guard. AI assistant slide-over: generate-story (tone/length/guidance → poll → insert) and title suggestions; credits-exhausted (403), failure, and timeout all surface as friendly errors.
+- **Profile & onboarding** — `/settings/profile` editor (username with inline 409 handling, bio counter, avatar preview); claim-username banner on dashboard/home; public `/profiles/[username]/followers` + `/following` pages; profile counts now link; "Edit profile" on own profile.
+- **App states** — branded root `loading`/`error`/`not-found` + dashboard skeleton.
+- **Frontend API layer** — new `lib/social-api.ts`, `users-api.ts`, `story-api.ts`, `ai-api.ts`, `upload.ts`, `use-me.ts`; `trip-api.ts` gains delete/locations/typed publish inputs. All with vitest specs.
+
+### Changed
+- `lib/api.ts` is the single source of `API_URL`/`unwrap`/`authHeaders` (+ `unwrapWithMeta`); the 4 duplicated copies are gone (largest frontend-API duplication debt item).
+- Navbar/journey-nav IA: "Destinations" → "Inspiration"; Pricing + About linked for signed-out visitors; footer reduced to real routes only (~13 dead links removed).
+- `/destinations` pages explicitly framed as demo/inspiration; the `[id]` "coming soon" dead end replaced with create-your-own CTAs.
+- All card/gallery images render via `lib/utils.ts` `mediaSrc()` (variant-aware, `originalUrl` fallback).
+- Dashboard distinguishes API-unreachable (error panel) from zero trips (empty state).
+
+### Fixed
+- **Playfair Display never rendered** — `globals.css` `@theme` referenced literal font family names instead of the `next/font` CSS vars; serif headlines silently fell back to Georgia.
+- `PATCH /v1/users/me` returned a raw 500 on a taken username; now 409, with a URL-safe username validation rule.
+- Create-trip modal hardcoded every location to lat/lng 0,0; coordinates are now enterable at create time and editable afterwards.
+
+---
+
 ## [Unreleased] — Phase 0: Repository Foundation (V2 line)
 
 ### Final Verification & Doc Reconciliation (Phase 0, session 3 — 2026-07-03) — **PHASE 0 COMPLETE ✅**

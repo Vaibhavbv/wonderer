@@ -1,15 +1,4 @@
-import { ApiError } from "./api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.success) {
-    const message = json?.error?.message || `Request failed (${res.status})`;
-    throw new ApiError(message, res.status);
-  }
-  return json.data as T;
-}
+import { API_URL, authHeaders, unwrap, unwrapWithMeta } from "./api";
 
 export interface NotificationRecord {
   id: string;
@@ -29,17 +18,17 @@ export async function getNotifications(
 ): Promise<{ items: NotificationRecord[]; nextCursor: string | null; unreadCount: number }> {
   const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
   const res = await fetch(`${API_URL}/v1/notifications${params}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token, false),
     cache: "no-store",
   });
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.success) {
-    throw new ApiError(json?.error?.message || `Request failed (${res.status})`, res.status);
-  }
+  const { data, meta } = await unwrapWithMeta<
+    NotificationRecord[],
+    { nextCursor?: string | null; unreadCount?: number }
+  >(res);
   return {
-    items: (json.data as NotificationRecord[]) ?? [],
-    nextCursor: json.meta?.nextCursor ?? null,
-    unreadCount: json.meta?.unreadCount ?? 0,
+    items: data ?? [],
+    nextCursor: meta?.nextCursor ?? null,
+    unreadCount: meta?.unreadCount ?? 0,
   };
 }
 

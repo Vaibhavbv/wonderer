@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { TripDetail } from "@/components/trips/trip-detail";
 import { getTrip } from "@/lib/trip-api";
+import { getMyProfile } from "@/lib/users-api";
 import { ApiError } from "@/lib/api";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,11 +22,14 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     throw err;
   }
 
+  const me = await getMyProfile(token).catch(() => null);
+  const viewerIsOwner = Boolean(me && me.id === trip.userId);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-20">
-        <TripDetail trip={trip} />
+        <TripDetail trip={trip} viewerIsOwner={viewerIsOwner} />
       </main>
     </div>
   );

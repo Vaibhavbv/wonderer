@@ -5,6 +5,7 @@ import {
   formatRelativeDate,
   formatFileSize,
   generateTripSlug,
+  mediaSrc,
   easeOutCubic,
   easeInOutCubic,
   lerp,
@@ -94,6 +95,35 @@ describe('generateTripSlug', () => {
 
   it('collapses repeated separators and trims leading/trailing hyphens', () => {
     expect(generateTripSlug('  --Paris__France--  ')).toBe('paris-france');
+  });
+});
+
+describe('mediaSrc', () => {
+  const original = 'https://cdn.example.com/original.jpg';
+
+  it('falls back to originalUrl when there are no variants (real uploads)', () => {
+    expect(mediaSrc({ variants: null, originalUrl: original })).toBe(original);
+    expect(mediaSrc({ originalUrl: original })).toBe(original);
+  });
+
+  it('prefers the requested variant when present', () => {
+    const media = {
+      originalUrl: original,
+      variants: {
+        large: { url: 'l.jpg' },
+        medium: { url: 'm.jpg' },
+        thumbnail: { url: 't.jpg' },
+      },
+    };
+    expect(mediaSrc(media)).toBe('l.jpg');
+    expect(mediaSrc(media, 'medium')).toBe('m.jpg');
+    expect(mediaSrc(media, 'thumbnail')).toBe('t.jpg');
+  });
+
+  it('falls through to the next available size before originalUrl', () => {
+    const media = { originalUrl: original, variants: { medium: { url: 'm.jpg' } } };
+    expect(mediaSrc(media, 'large')).toBe('m.jpg');
+    expect(mediaSrc(media, 'thumbnail')).toBe('m.jpg');
   });
 });
 

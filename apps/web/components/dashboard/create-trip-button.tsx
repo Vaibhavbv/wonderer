@@ -3,20 +3,40 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { Plus, X, ImagePlus } from "lucide-react";
+import { Plus, X, ImagePlus, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createTrip, getPresignedUrl, updateMedia, updateTrip, uploadToPresignedUrl } from "@/lib/trip-api";
+import { createTrip, updateTrip } from "@/lib/trip-api";
+import { uploadTripPhotos } from "@/lib/upload";
 
 interface DraftDestination {
   key: string;
   name: string;
   country: string;
   notes: string;
+  latitude: string;
+  longitude: string;
+  showCoords: boolean;
   files: File[];
 }
 
 function emptyDestination(): DraftDestination {
-  return { key: Math.random().toString(36).slice(2), name: "", country: "", notes: "", files: [] };
+  return {
+    key: Math.random().toString(36).slice(2),
+    name: "",
+    country: "",
+    notes: "",
+    latitude: "",
+    longitude: "",
+    showCoords: false,
+    files: [],
+  };
+}
+
+function parseCoord(value: string, min: number, max: number): number | null {
+  if (!value.trim()) return null;
+  const n = Number(value);
+  if (Number.isNaN(n) || n < min || n > max) return null;
+  return n;
 }
 
 export function CreateTripButton() {
@@ -70,30 +90,17 @@ export function CreateTripButton() {
           name: d.name.trim(),
           country: d.country.trim() || undefined,
           notes: d.notes.trim() || undefined,
-          latitude: 0,
-          longitude: 0,
+          // Coordinates are optional here — you can set them later in Edit
+          // trip; 0,0 marks "not placed yet".
+          latitude: parseCoord(d.latitude, -90, 90) ?? 0,
+          longitude: parseCoord(d.longitude, -180, 180) ?? 0,
         })),
       });
 
       const uploadedIds = await Promise.all(
         trip.locations.map(async (location, idx) => {
           const files = validDestinations[idx]?.files ?? [];
-          const ids: string[] = [];
-          for (const file of files) {
-            try {
-              const presigned = await getPresignedUrl(token, {
-                filename: file.name,
-                contentType: file.type,
-                fileSize: file.size,
-                tripId: trip.id,
-              });
-              await uploadToPresignedUrl(presigned.uploadUrl, file);
-              await updateMedia(token, presigned.mediaId, { locationId: location.id });
-              ids.push(presigned.mediaId);
-            } catch (err) {
-              console.error("Photo upload failed", err);
-            }
-          }
+          const { uploadedIds: ids } = await uploadTripPhotos(token, trip.id, files, location.id);
           return ids;
         }),
       );
@@ -181,6 +188,38 @@ export function CreateTripButton() {
                       rows={2}
                       className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
+                    {dest.showCoords ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        <input
+                          type="number"
+                          step="any"
+                          value={dest.latitude}
+                          onChange={(e) => updateDestination(dest.key, { latitude: e.target.value })}
+                          placeholder="Latitude (−90…90)"
+                          className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        <input
+                          type="number"
+                          step="any"
+                          value={dest.longitude}
+                          onChange={(e) => updateDestination(dest.key, { longitude: e.target.value })}
+                          placeholder="Longitude (−180…180)"
+                          className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                        <p className="col-span-2 text-xs text-text-tertiary">
+                          These place the pin on your journey globe. Blank is fine — set them later in Edit trip.
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => updateDestination(dest.key, { showCoords: true })}
+                        className="flex items-center gap-1.5 text-xs text-text-tertiary hover:text-primary-600"
+                      >
+                        <MapPin className="w-3.5 h-3.5" />
+                        Add coordinates (places the globe pin)
+                      </button>
+                    )}
                     <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer hover:text-text-primary">
                       <ImagePlus className="w-4 h-4" />
                       {dest.files.length > 0 ? `${dest.files.length} photo(s) selected` : "Add photos"}

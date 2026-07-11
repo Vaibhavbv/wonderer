@@ -69,9 +69,10 @@ The shareable hero unit.
 
 ### TripLocation (`trip_locations`) ✅
 - `name`, `latitude`/`longitude` (Float), `country`, `city`, `address`, `order`, `arrivedAt`/`departedAt`, `notes` (Text — mig 2), `theme` (Json — mig 2).
-- **Relations:** media (via `Media.locationId`).
+- **Relations:** media (via `Media.locationId`, `onDelete: SetNull` — deleting a location detaches, not deletes, its media).
 - **Indexes:** `tripId`, `[latitude, longitude]`.
-- ⚠️ Trip creation currently writes `lat:0,lng:0` (no geocoding — WV-301).
+- **Now API-mutable after creation** (flagship-journal upgrade, ADR-016): add/update/delete/reorder via `/v1/trips/:id/locations…`. `order` is append-on-add, compacted on delete, index-assigned on reorder. There is **no denormalized locations counter on Trip** — `getTripStats` counts live; don't add one.
+- ~~⚠️ Trip creation currently writes `lat:0,lng:0` (no geocoding — WV-301)~~ → coordinates are user-enterable at create time and editable afterwards (geocoding itself still stubbed — WV-301); `0,0` now means "pin not placed yet".
 
 ### Media (`media`) ✅
 - `type` (MediaType), `mimeType`, `filename`, `originalUrl`, `variants` (Json — *never populated*), `width`/`height`, `fileSize` (BigInt), `duration`, `exif` (Json), `caption` (VarChar 500), `tags` (String[]), `aiDescription`, `locationName`, `latitude`/`longitude`/`altitude`, `processingStatus` (string, 'pending'), `aiEnhanced` (Boolean), `order`, `locationId` (FK → TripLocation, `SetNull`, mig 2), `coverForTrip` (reverse of `Trip.coverPhotoId`).
@@ -79,6 +80,7 @@ The shareable hero unit.
 
 ### Story (`stories`) ✅
 - `tripId` (unique, 1:1), `template` ('cinematic-scroll'), `theme` (Json), `blocks` (Json, required), `version` (1), `lastEditedBy`, `lastEditedAt`, `publishedAt`, `publishedUrl`.
+- **`blocks` shape** (as written by the journal editor + backend default): `[{ id: string, type: 'hero'|'heading'|'text'|'photo'|…, position: {x,y,w,h} (y = block index), content: {…} }]`. Content per type — hero: `{title, subtitle, overlayOpacity}`; heading/text: `{text}`; photo: `{mediaId, url, caption}`. **Editors must preserve unknown block types on save** — `PUT` is a full replace.
 
 ### Comment (`comments`) ✅
 - `content` (VarChar 2000), `parentId` (⚠ **plain String, not a FK relation** — referential integrity enforced only in app code), `likesCount`, likes (`CommentLike[]`).

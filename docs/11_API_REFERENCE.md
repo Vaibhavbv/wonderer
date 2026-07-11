@@ -38,7 +38,7 @@
 | Method | Path | Purpose | Input | Output |
 |---|---|---|---|---|
 | GET | `/v1/users/me` | Current user profile | — | user (selected fields) |
-| PATCH | `/v1/users/me` | Update own profile | `UpdateProfileDto` (displayName, username, bio, location, website, timezone, language, unitSystem, emailNotifications, avatarUrl — all optional) | updated user |
+| PATCH | `/v1/users/me` | Update own profile | `UpdateProfileDto` (displayName, username, bio, location, website, timezone, language, unitSystem, emailNotifications, avatarUrl — all optional; username is URL-safe-validated) | updated user (**409** if username taken) |
 | GET | `/v1/users/me/stats` | Aggregate stats | — | `{tripsCount, mediaCount, followersCount, followingCount, totalViews}` |
 | GET | `/v1/users/me/subscription` | Subscription view (read-only) | — | `{subscriptionTier, subscriptionStatus, stripeCustomerId, stripeSubscriptionId, currentPeriodEnd}` |
 | DELETE | `/v1/users/me` | GDPR delete (cascades) | — | 200 |
@@ -59,6 +59,12 @@ All ✅. Note: subscription fields are **read-only** — nothing writes them (pa
 | GET | `/v1/trips/:id/stats` | Trip stats | — | counts (photos/videos/storyBlocks/views/likes/comments, locationsCount, totalMediaSize) | ✅ (owner only) |
 | POST | `/v1/trips/:id/like` | Like | — | 201 | ✅ (409 if already liked; notifies owner) |
 | DELETE | `/v1/trips/:id/like` | Unlike | — | 200 | ✅ |
+| POST | `/v1/trips/:id/locations` | Add a stop after creation | `CreateLocationDto {name, latitude, longitude, country?, city?, notes?}` — lat/lng **required** & range-validated | location | ✅ (owner/non-VIEWER via `getEditableTrip`; order = max+1; theme via `inferTheme`) |
+| PATCH | `/v1/trips/:id/locations/:locationId` | Update a stop | `UpdateLocationDto` (all fields optional) | location | ✅ (404 if location not on this trip; theme recomputed when name/country change) |
+| DELETE | `/v1/trips/:id/locations/:locationId` | Remove a stop | — | 204 | ✅ (remaining `order` re-compacted; media keeps existing via `onDelete: SetNull`) |
+| PUT | `/v1/trips/:id/locations/order` | Reorder all stops | `ReorderLocationsDto {locationIds[]}` — must contain every location exactly once (400 otherwise) | locations[] | ✅ |
+
+**Mutation guard:** all location routes (and `PATCH /v1/trips/:id`) use `getEditableTrip` — owner or non-VIEWER collaborator. `getAccessibleTrip` remains the *read* check only.
 
 ---
 

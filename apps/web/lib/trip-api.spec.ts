@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { likeTrip, unlikeTrip, createTrip, getTrip } from './trip-api';
+import { likeTrip, unlikeTrip, createTrip, getTrip, deleteTrip, addLocation, reorderLocations } from './trip-api';
 import { ApiError } from './api';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -74,6 +74,56 @@ describe('trip-api', () => {
       );
 
       await expect(createTrip('token-123', { title: 'Japan' })).rejects.toThrow('Quota exceeded');
+    });
+  });
+
+  describe('deleteTrip', () => {
+    it('resolves on a body-less 204 response', async () => {
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        status: 204,
+        json: async () => {
+          throw new Error('no body');
+        },
+      } as unknown as Response);
+
+      await expect(deleteTrip('token-123', 'trip-1')).resolves.toBeUndefined();
+    });
+
+    it('throws ApiError when the delete is forbidden', async () => {
+      vi.mocked(fetch).mockResolvedValue(
+        jsonResponse({ success: false, error: { message: 'Only the owner can delete a trip' } }, 403),
+      );
+
+      await expect(deleteTrip('token-123', 'trip-1')).rejects.toThrow('Only the owner can delete a trip');
+    });
+  });
+
+  describe('locations', () => {
+    it('addLocation POSTs the location payload to the trip locations route', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true, data: { id: 'loc-1', order: 0 } }));
+
+      const result = await addLocation('token-123', 'trip-1', {
+        name: 'Kyoto',
+        latitude: 35.01,
+        longitude: 135.76,
+      });
+
+      expect(result.id).toBe('loc-1');
+      const [url, init] = vi.mocked(fetch).mock.calls[0];
+      expect(String(url)).toContain('/v1/trips/trip-1/locations');
+      expect(init?.method).toBe('POST');
+    });
+
+    it('reorderLocations PUTs the full id list', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({ success: true, data: [] }));
+
+      await reorderLocations('token-123', 'trip-1', ['loc-2', 'loc-1']);
+
+      const [url, init] = vi.mocked(fetch).mock.calls[0];
+      expect(String(url)).toContain('/v1/trips/trip-1/locations/order');
+      expect(init?.method).toBe('PUT');
+      expect(init?.body).toBe(JSON.stringify({ locationIds: ['loc-2', 'loc-1'] }));
     });
   });
 

@@ -1,20 +1,73 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Lock, Globe, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+import { MapPin, Calendar, Lock, Globe, Eye, Pencil, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { TiltCard } from "@/components/ui/tilt-card";
-import { formatDate } from "@/lib/utils";
+import { formatDate, mediaSrc } from "@/lib/utils";
 import Link from "next/link";
-import type { TripSummary } from "@/lib/trip-api";
+import { updateTrip, type TripSummary } from "@/lib/trip-api";
 
 function coverUrl(t: TripSummary): string | null {
   if (!t.coverPhoto) return null;
+  return mediaSrc(t.coverPhoto, "medium");
+}
+
+// The whole card is wrapped in a Link, so in-card actions must be buttons
+// (nested anchors are invalid HTML) that stop the navigation event.
+function EditShortcut({ tripId, title }: { tripId: string; title: string }) {
+  const router = useRouter();
   return (
-    t.coverPhoto.variants?.medium?.url ||
-    t.coverPhoto.variants?.large?.url ||
-    t.coverPhoto.originalUrl ||
-    null
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        router.push(`/trips/${tripId}/edit`);
+      }}
+      className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-neutral-700 opacity-0 transition-opacity hover:text-primary-600 group-hover:opacity-100 focus:opacity-100"
+      aria-label={`Edit ${title}`}
+    >
+      <Pencil className="h-4 w-4" />
+    </button>
+  );
+}
+
+// Publish-from-the-card quick action for drafts.
+function PublishBadge({ tripId }: { tripId: string }) {
+  const [busy, setBusy] = useState(false);
+  const { getToken } = useAuth();
+  const router = useRouter();
+
+  async function publish(e: React.MouseEvent) {
+    // Card is wrapped in a Link — don't navigate.
+    e.preventDefault();
+    e.stopPropagation();
+    setBusy(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      await updateTrip(token, tripId, { status: "PUBLISHED" });
+      router.refresh();
+    } catch {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={publish}
+      disabled={busy}
+      className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/80 text-white transition-colors hover:bg-primary-500 disabled:opacity-60"
+      title="Publish this trip"
+    >
+      <Upload className="w-3 h-3 inline mr-1" />
+      {busy ? "Publishing…" : "DRAFT — publish"}
+    </button>
   );
 }
 
@@ -23,7 +76,7 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
     return (
       <div className="border border-dashed border-border rounded-2xl py-20 text-center">
         <MapPin className="w-8 h-8 mx-auto mb-3 text-text-tertiary" />
-        <p className="text-text-primary font-medium">No trips yet</p>
+        <p className="font-heading text-xl text-text-primary">Every atlas starts blank</p>
         <p className="text-text-tertiary text-sm mt-1">
           Click &ldquo;New Trip&rdquo; to add your destinations, photos, and memories.
         </p>
@@ -75,12 +128,9 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
                       )}
                       {trip.privacy}
                     </span>
-                    {trip.status === "DRAFT" && (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/80 text-white">
-                        DRAFT
-                      </span>
-                    )}
+                    {trip.status === "DRAFT" && <PublishBadge tripId={trip.id} />}
                   </div>
+                  <EditShortcut tripId={trip.id} title={trip.title} />
                 </div>
                 <div className="p-5">
                   <h3 className="font-heading text-lg font-semibold text-text-primary group-hover:text-primary-600 transition-colors">

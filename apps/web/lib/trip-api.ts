@@ -1,19 +1,4 @@
-import { ApiError } from "./api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-async function unwrap<T>(res: Response): Promise<T> {
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.success) {
-    const message = json?.error?.message || `Request failed (${res.status})`;
-    throw new ApiError(message, res.status);
-  }
-  return json.data as T;
-}
-
-function authHeaders(token: string): HeadersInit {
-  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-}
+import { API_URL, ApiError, authHeaders, unwrap, unwrapWithMeta } from "./api";
 
 export interface DestinationTheme {
   from: string;
@@ -102,15 +87,12 @@ export interface TripSummary {
 
 export async function getTrips(token: string): Promise<{ items: TripSummary[]; total: number }> {
   const res = await fetch(`${API_URL}/v1/trips?per_page=50&sort=created_at:desc`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token, false),
     cache: "no-store",
   });
-  const json = await res.json().catch(() => null);
-  if (!res.ok || !json?.success) {
-    throw new ApiError(json?.error?.message || `Request failed (${res.status})`, res.status);
-  }
-  const items = (json.data as TripSummary[]) ?? [];
-  return { items, total: json.meta?.total ?? items.length };
+  const { data, meta } = await unwrapWithMeta<TripSummary[], { total?: number }>(res);
+  const items = data ?? [];
+  return { items, total: meta?.total ?? items.length };
 }
 
 export async function createTrip(token: string, input: CreateTripInput): Promise<TripRecord> {
@@ -122,10 +104,21 @@ export async function createTrip(token: string, input: CreateTripInput): Promise
   return unwrap<TripRecord>(res);
 }
 
+export interface UpdateTripInput {
+  title?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  tags?: string[];
+  privacy?: "PRIVATE" | "UNLISTED" | "PUBLIC";
+  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  coverPhotoId?: string;
+}
+
 export async function updateTrip(
   token: string,
   tripId: string,
-  input: { coverPhotoId?: string; title?: string; description?: string; privacy?: string; status?: string },
+  input: UpdateTripInput,
 ): Promise<TripRecord> {
   const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}`, {
     method: "PATCH",
@@ -133,6 +126,15 @@ export async function updateTrip(
     body: JSON.stringify(input),
   });
   return unwrap<TripRecord>(res);
+}
+
+export async function deleteTrip(token: string, tripId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}`, {
+    method: "DELETE",
+    headers: authHeaders(token, false),
+  });
+  // 204 No Content on success — nothing to unwrap.
+  if (!res.ok) await unwrap(res);
 }
 
 export async function getTrip(token: string, tripId: string): Promise<TripRecord> {
@@ -195,6 +197,87 @@ export async function updateMedia(
     body: JSON.stringify(input),
   });
   return unwrap<TripMediaRecord>(res);
+}
+
+export async function deleteMedia(token: string, mediaId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/v1/media/${encodeURIComponent(mediaId)}`, {
+    method: "DELETE",
+    headers: authHeaders(token, false),
+  });
+  if (!res.ok) await unwrap(res);
+}
+
+// ---- Trip locations (post-create itinerary editing) ----
+
+export interface CreateLocationInput {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country?: string;
+  city?: string;
+  notes?: string;
+}
+
+export type UpdateLocationInput = Partial<CreateLocationInput>;
+
+export async function addLocation(
+  token: string,
+  tripId: string,
+  input: CreateLocationInput,
+): Promise<TripLocationRecord> {
+  const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}/locations`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(input),
+  });
+  return unwrap<TripLocationRecord>(res);
+}
+
+export async function updateLocation(
+  token: string,
+  tripId: string,
+  locationId: string,
+  input: UpdateLocationInput,
+): Promise<TripLocationRecord> {
+  const res = await fetch(
+    `${API_URL}/v1/trips/${encodeURIComponent(tripId)}/locations/${encodeURIComponent(locationId)}`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify(input),
+    },
+  );
+  return unwrap<TripLocationRecord>(res);
+}
+
+export async function deleteLocation(
+  token: string,
+  tripId: string,
+  locationId: string,
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/v1/trips/${encodeURIComponent(tripId)}/locations/${encodeURIComponent(locationId)}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token, false),
+    },
+  );
+  if (!res.ok) await unwrap(res);
+}
+
+// locationIds must contain every location of the trip exactly once, in the
+// desired order. Returns the reordered list.
+export async function reorderLocations(
+  token: string,
+  tripId: string,
+  locationIds: string[],
+): Promise<TripLocationRecord[]> {
+  const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}/locations/order`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ locationIds }),
+  });
+  return unwrap<TripLocationRecord[]>(res);
 }
 
 export async function likeTrip(token: string, tripId: string): Promise<{ liked: boolean }> {
