@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TripDetail } from "@/components/trips/trip-detail";
 import { getTrip } from "@/lib/trip-api";
 import { getMyProfile } from "@/lib/users-api";
@@ -26,11 +26,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   const viewerIsOwner = Boolean(me && me.id === trip.userId);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-20">
-        <TripDetail trip={trip} viewerIsOwner={viewerIsOwner} />
-      </main>
-    </div>
+    <AppSidebar>
+      <div className="pt-2 sm:pt-4">
+        <TripDetail trip={trip} />
+      </div>
+    </AppSidebar>
   );
 }
