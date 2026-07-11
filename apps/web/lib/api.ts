@@ -1,13 +1,33 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Single source of truth for API access. Every lib/*-api.ts wrapper imports
+// API_URL/unwrap/authHeaders from here — don't re-declare them per file.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-// The API wraps every response as { success, data, error }. This unwraps it.
-async function unwrap<T>(res: Response): Promise<T> {
+// The API wraps every response as { success, data, meta, error }. This unwraps it.
+export async function unwrap<T>(res: Response): Promise<T> {
   const json = await res.json().catch(() => null);
   if (!res.ok || !json?.success) {
     const message = json?.error?.message || `Request failed (${res.status})`;
     throw new ApiError(message, res.status);
   }
   return json.data as T;
+}
+
+// Like unwrap, but also returns the envelope's meta (cursors, counts).
+export async function unwrapWithMeta<T, M = Record<string, unknown>>(
+  res: Response,
+): Promise<{ data: T; meta: M | null }> {
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.success) {
+    const message = json?.error?.message || `Request failed (${res.status})`;
+    throw new ApiError(message, res.status);
+  }
+  return { data: json.data as T, meta: (json.meta as M) ?? null };
+}
+
+export function authHeaders(token: string, json = true): HeadersInit {
+  return json
+    ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+    : { Authorization: `Bearer ${token}` };
 }
 
 export class ApiError extends Error {
@@ -64,7 +84,7 @@ export interface FeedTrip {
   commentsCount: number;
   viewsCount: number;
   createdAt: string;
-  coverPhoto: { id: string; variants: unknown; originalUrl: string } | null;
+  coverPhoto: { id: string; variants: Record<string, { url: string }> | null; originalUrl: string } | null;
   locations: TripLocation[];
   user: PublicUser;
 }
@@ -93,4 +113,17 @@ export async function getProfileTrips(username: string): Promise<Paginated<FeedT
 export async function getDiscover(): Promise<Paginated<FeedTrip>> {
   const res = await fetch(`${API_URL}/v1/discover`, { next: { revalidate: 30 } });
   return unwrap<Paginated<FeedTrip>>(res);
+}
+
+export interface Me {
+  id: string;
+  username: string | null;
+}
+
+// Client-side authenticated fetch for the signed-in user's own record.
+export async function getMe(token: string): Promise<Me> {
+  const res = await fetch(`${API_URL}/v1/users/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return unwrap<Me>(res);
 }

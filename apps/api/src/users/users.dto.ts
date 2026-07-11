@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsEmail, MaxLength, MinLength, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsEmail, Matches, MaxLength, MinLength, IsUrl } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateProfileDto {
@@ -9,11 +9,14 @@ export class UpdateProfileDto {
   @MaxLength(100)
   displayName?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'URL-safe handle: letters, numbers, dots, dashes, underscores' })
   @IsOptional()
   @IsString()
   @MinLength(3)
   @MaxLength(50)
+  @Matches(/^[a-zA-Z0-9_.-]+$/, {
+    message: 'Username may only contain letters, numbers, dots, dashes and underscores',
+  })
   username?: string;
 
   @ApiPropertyOptional()

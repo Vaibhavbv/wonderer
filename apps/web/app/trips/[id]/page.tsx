@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TripDetail } from "@/components/trips/trip-detail";
 import { getTrip } from "@/lib/trip-api";
+import { getMyProfile } from "@/lib/users-api";
 import { ApiError } from "@/lib/api";
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +21,9 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     if (err instanceof ApiError && (err.status === 404 || err.status === 403)) notFound();
     throw err;
   }
+
+  const me = await getMyProfile(token).catch(() => null);
+  const viewerIsOwner = Boolean(me && me.id === trip.userId);
 
   return (
     <AppSidebar>

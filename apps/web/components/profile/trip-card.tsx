@@ -1,4 +1,5 @@
 import type { FeedTrip } from "@/lib/api";
+import { mediaSrc } from "@/lib/utils";
 
 function formatRange(start: string | null, end: string | null) {
   if (!start) return "";
@@ -12,7 +13,7 @@ function formatRange(start: string | null, end: string | null) {
 }
 
 export function TripCard({ trip }: { trip: FeedTrip }) {
-  const cover = trip.coverPhoto?.originalUrl;
+  const cover = trip.coverPhoto ? mediaSrc(trip.coverPhoto, "medium") : null;
   const place = trip.locations[0];
   const placeLabel = place ? `${place.city ?? place.name}${place.country ? `, ${place.country}` : ""}` : null;
 

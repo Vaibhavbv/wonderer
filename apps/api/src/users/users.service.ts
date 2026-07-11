@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { UpdateProfileDto } from './users.dto';
 
@@ -46,21 +47,29 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(dto.displayName !== undefined && { displayName: dto.displayName }),
-        ...(dto.username !== undefined && { username: dto.username }),
-        ...(dto.bio !== undefined && { bio: dto.bio }),
-        ...(dto.location !== undefined && { location: dto.location }),
-        ...(dto.website !== undefined && { website: dto.website }),
-        ...(dto.timezone !== undefined && { timezone: dto.timezone }),
-        ...(dto.language !== undefined && { language: dto.language }),
-        ...(dto.unitSystem !== undefined && { unitSystem: dto.unitSystem }),
-        ...(dto.emailNotifications !== undefined && { emailNotifications: dto.emailNotifications }),
-        ...(dto.avatarUrl !== undefined && { avatarUrl: dto.avatarUrl }),
-      },
-    });
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(dto.displayName !== undefined && { displayName: dto.displayName }),
+          ...(dto.username !== undefined && { username: dto.username }),
+          ...(dto.bio !== undefined && { bio: dto.bio }),
+          ...(dto.location !== undefined && { location: dto.location }),
+          ...(dto.website !== undefined && { website: dto.website }),
+          ...(dto.timezone !== undefined && { timezone: dto.timezone }),
+          ...(dto.language !== undefined && { language: dto.language }),
+          ...(dto.unitSystem !== undefined && { unitSystem: dto.unitSystem }),
+          ...(dto.emailNotifications !== undefined && { emailNotifications: dto.emailNotifications }),
+          ...(dto.avatarUrl !== undefined && { avatarUrl: dto.avatarUrl }),
+        },
+      });
+    } catch (e) {
+      // username has a unique index — surface a taken handle as 409, not 500.
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('That username is already taken');
+      }
+      throw e;
+    }
   }
 
   async getStats(userId: string) {

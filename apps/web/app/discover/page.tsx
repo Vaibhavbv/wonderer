@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { TripCard } from "@/components/profile/trip-card";
+import { DiscoverGallery } from "@/components/discover/discover-gallery";
+import { KineticShowcase } from "@/components/discover/kinetic-showcase";
 import { getDiscover } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -25,15 +26,20 @@ export default async function DiscoverPage() {
           </header>
 
           {trips.length === 0 ? (
-            <p className="text-text-secondary">No public trips yet — be the first to share one.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {trips.map((trip) => (
-                <a key={trip.id} href={`/profiles/${trip.user.username}`}>
-                  <TripCard trip={trip} />
-                </a>
-              ))}
+            <div className="rounded-2xl border border-dashed border-border px-8 py-20 text-center">
+              <h2 className="font-heading text-2xl text-text-primary">The world is waiting for its first story</h2>
+              <p className="mx-auto mt-2 max-w-md text-text-secondary">
+                No public journeys yet. Publish one of yours and it will headline this page.
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="mb-12">
+                <h2 className="mb-4 font-heading text-xl text-text-primary">Trending journeys</h2>
+                <KineticShowcase trips={trips.slice(0, 8)} />
+              </div>
+              <DiscoverGallery trips={trips} />
+            </>
           )}
         </div>
       </main>

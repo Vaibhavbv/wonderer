@@ -17,7 +17,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3001);
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
-  const allowedOrigins = configService.get<string>('CORS_ORIGINS', '*').split(',');
+  const corsOrigins = configService.get<string>('CORS_ORIGINS', '*');
+  // The `cors` package treats a string '*' as "allow all", but an array containing
+  // the literal string '*' as a one-item allowlist that never matches a real Origin
+  // header. With credentials: true that combo silently breaks every cross-origin
+  // request, so wildcard mode must stay a value the package reflects per-request.
+  const allowedOrigins = corsOrigins === '*' ? true : corsOrigins.split(',');
 
   // Security middleware
   app.use(helmet({

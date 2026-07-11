@@ -4,10 +4,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class SyncUserDto {
   @ApiProperty()
   @IsString()
-  clerkId: string;
-
-  @ApiProperty()
-  @IsString()
   email: string;
 
   @ApiPropertyOptional()

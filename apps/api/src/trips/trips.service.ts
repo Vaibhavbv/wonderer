@@ -1,15 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
-import { CreateTripDto, UpdateTripDto, TripListQueryDto } from './trips.dto';
+import { CreateTripDto, UpdateTripDto, TripListQueryDto, CreateLocationDto, UpdateLocationDto, ReorderLocationsDto } from './trips.dto';
 import { Prisma, TripPrivacy, TripStatus } from '@prisma/client';
 import { generateSlug } from '@common/utils/slug';
 import { inferTheme } from '@common/utils/theme-inference';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class TripsService {
   private readonly logger = new Logger(TripsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   // Maps snake_case sort keys from the query string to Prisma schema fields.
   private static readonly SORT_FIELDS: Record<string, string> = {
@@ -129,20 +133,15 @@ export class TripsService {
       throw new ForbiddenException('You do not have access to this trip');
     }
 
-    return trip;
+    const isLiked = await this.prisma.like.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    }).then(Boolean);
+
+    return { ...trip, isLiked };
   }
 
   async updateTrip(userId: string, tripId: string, dto: UpdateTripDto) {
-    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip) throw new NotFoundException('Trip not found');
-    if (trip.userId !== userId) {
-      const collaborator = await this.prisma.tripCollaborator.findUnique({
-        where: { tripId_userId: { tripId, userId } },
-      });
-      if (!collaborator || collaborator.role === 'VIEWER') {
-        throw new ForbiddenException('You do not have permission to edit this trip');
-      }
-    }
+    await this.getEditableTrip(tripId, userId);
 
     const updated = await this.prisma.trip.update({
       where: { id: tripId },
@@ -181,6 +180,8 @@ export class TripsService {
   }
 
   async duplicateTrip(userId: string, tripId: string) {
+    await this.getAccessibleTrip(tripId, userId);
+
     const original = await this.prisma.trip.findUnique({
       where: { id: tripId },
       include: { locations: true, media: true },
@@ -242,5 +243,188 @@ export class TripsService {
         _sum: { fileSize: true },
       }).then((r) => r._sum.fileSize || 0),
     };
+  }
+
+  private async getAccessibleTrip(tripId: string, userId: string) {
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) throw new NotFoundException('Trip not found');
+    if (trip.userId !== userId && trip.privacy === 'PRIVATE') {
+      throw new ForbiddenException('You do not have access to this trip');
+    }
+    return trip;
+  }
+
+  // Mutation guard: owner or non-VIEWER collaborator. getAccessibleTrip is a
+  // READ check (it admits anyone for non-PRIVATE trips) and must never gate
+  // writes.
+  private async getEditableTrip(tripId: string, userId: string) {
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) throw new NotFoundException('Trip not found');
+    if (trip.userId !== userId) {
+      const collaborator = await this.prisma.tripCollaborator.findUnique({
+        where: { tripId_userId: { tripId, userId } },
+      });
+      if (!collaborator || collaborator.role === 'VIEWER') {
+        throw new ForbiddenException('You do not have permission to edit this trip');
+      }
+    }
+    return trip;
+  }
+
+  // ---- Trip locations (post-create itinerary editing) ----
+  // Note: Trip has no denormalized locations counter (getTripStats counts
+  // live), so none is maintained here.
+
+  async addLocation(userId: string, tripId: string, dto: CreateLocationDto) {
+    const trip = await this.getEditableTrip(tripId, userId);
+
+    const maxOrder = await this.prisma.tripLocation.aggregate({
+      where: { tripId },
+      _max: { order: true },
+    });
+
+    return this.prisma.tripLocation.create({
+      data: {
+        tripId,
+        name: dto.name,
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+        country: dto.country,
+        city: dto.city,
+        notes: dto.notes,
+        order: (maxOrder._max.order ?? -1) + 1,
+        theme: inferTheme(dto.name, dto.country, trip.tags) as unknown as Prisma.InputJsonValue,
+      },
+    });
+  }
+
+  async updateLocation(userId: string, tripId: string, locationId: string, dto: UpdateLocationDto) {
+    const trip = await this.getEditableTrip(tripId, userId);
+
+    const location = await this.prisma.tripLocation.findUnique({ where: { id: locationId } });
+    if (!location || location.tripId !== tripId) {
+      throw new NotFoundException('Location not found on this trip');
+    }
+
+    // The atmosphere theme derives from the place; recompute when it changes.
+    const themeInputsChanged =
+      (dto.name !== undefined && dto.name !== location.name) ||
+      (dto.country !== undefined && dto.country !== location.country);
+
+    return this.prisma.tripLocation.update({
+      where: { id: locationId },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.latitude !== undefined && { latitude: dto.latitude }),
+        ...(dto.longitude !== undefined && { longitude: dto.longitude }),
+        ...(dto.country !== undefined && { country: dto.country }),
+        ...(dto.city !== undefined && { city: dto.city }),
+        ...(dto.notes !== undefined && { notes: dto.notes }),
+        ...(themeInputsChanged && {
+          theme: inferTheme(
+            dto.name ?? location.name,
+            dto.country ?? location.country ?? undefined,
+            trip.tags,
+          ) as unknown as Prisma.InputJsonValue,
+        }),
+      },
+    });
+  }
+
+  async removeLocation(userId: string, tripId: string, locationId: string) {
+    await this.getEditableTrip(tripId, userId);
+
+    const location = await this.prisma.tripLocation.findUnique({ where: { id: locationId } });
+    if (!location || location.tripId !== tripId) {
+      throw new NotFoundException('Location not found on this trip');
+    }
+
+    // Media.location has onDelete: SetNull, so attached photos survive the
+    // delete; we only need to re-compact the remaining stops' order.
+    await this.prisma.tripLocation.delete({ where: { id: locationId } });
+
+    const remaining = await this.prisma.tripLocation.findMany({
+      where: { tripId },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true },
+    });
+    await this.prisma.$transaction(
+      remaining
+        .map((loc, idx) => ({ loc, idx }))
+        .filter(({ loc, idx }) => loc.order !== idx)
+        .map(({ loc, idx }) =>
+          this.prisma.tripLocation.update({ where: { id: loc.id }, data: { order: idx } }),
+        ),
+    );
+
+    return { deleted: true };
+  }
+
+  async reorderLocations(userId: string, tripId: string, dto: ReorderLocationsDto) {
+    await this.getEditableTrip(tripId, userId);
+
+    const locations = await this.prisma.tripLocation.findMany({
+      where: { tripId },
+      select: { id: true },
+    });
+    const existingIds = new Set(locations.map((l) => l.id));
+    const requestedIds = new Set(dto.locationIds);
+    if (
+      existingIds.size !== dto.locationIds.length ||
+      requestedIds.size !== dto.locationIds.length ||
+      [...existingIds].some((id) => !requestedIds.has(id))
+    ) {
+      throw new BadRequestException('locationIds must contain every location of the trip exactly once');
+    }
+
+    await this.prisma.$transaction(
+      dto.locationIds.map((id, idx) =>
+        this.prisma.tripLocation.update({ where: { id }, data: { order: idx } }),
+      ),
+    );
+
+    return this.prisma.tripLocation.findMany({ where: { tripId }, orderBy: { order: 'asc' } });
+  }
+
+  async likeTrip(userId: string, tripId: string) {
+    const trip = await this.getAccessibleTrip(tripId, userId);
+
+    try {
+      await this.prisma.like.create({ data: { tripId, userId } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Trip already liked');
+      }
+      throw e;
+    }
+
+    await this.prisma.trip.update({
+      where: { id: tripId },
+      data: { likesCount: { increment: 1 } },
+    });
+
+    if (trip.userId !== userId) {
+      const liker = await this.prisma.user.findUnique({ where: { id: userId } });
+      await this.notifications.create({
+        userId: trip.userId,
+        type: 'like',
+        title: `${liker?.displayName || liker?.username || 'Someone'} liked your trip`,
+        body: trip.title,
+        data: { tripId, userId },
+      });
+    }
+
+    return { liked: true };
+  }
+
+  async unlikeTrip(userId: string, tripId: string) {
+    const result = await this.prisma.like.deleteMany({ where: { tripId, userId } });
+    if (result.count > 0) {
+      await this.prisma.trip.update({
+        where: { id: tripId },
+        data: { likesCount: { decrement: 1 } },
+      });
+    }
+    return { liked: false };
   }
 }

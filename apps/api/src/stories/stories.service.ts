@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
+import { UpdateStoryDto } from './stories.dto';
 
 @Injectable()
 export class StoriesService {
@@ -37,7 +39,7 @@ export class StoriesService {
     return story;
   }
 
-  async updateStory(userId: string, tripId: string, dto: any) {
+  async updateStory(userId: string, tripId: string, dto: UpdateStoryDto) {
     const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
     if (!trip) throw new NotFoundException('Trip not found');
     if (trip.userId !== userId) {
@@ -51,8 +53,8 @@ export class StoriesService {
       where: { tripId },
       update: {
         template: dto.template,
-        theme: dto.theme,
-        blocks: dto.blocks,
+        theme: dto.theme as unknown as Prisma.InputJsonValue,
+        blocks: dto.blocks as unknown as Prisma.InputJsonValue,
         version: { increment: 1 },
         lastEditedBy: userId,
         lastEditedAt: new Date(),
@@ -60,8 +62,8 @@ export class StoriesService {
       create: {
         tripId,
         template: dto.template || 'cinematic-scroll',
-        theme: dto.theme,
-        blocks: dto.blocks,
+        theme: dto.theme as unknown as Prisma.InputJsonValue,
+        blocks: dto.blocks as unknown as Prisma.InputJsonValue,
         version: 1,
         lastEditedBy: userId,
       },

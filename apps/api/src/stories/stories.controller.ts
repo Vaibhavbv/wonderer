@@ -1,6 +1,7 @@
 import { Controller, Get, Put, Patch, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { StoriesService } from './stories.service';
+import { UpdateStoryDto } from './stories.dto';
 import { ClerkAuthGuard } from '@common/guards/clerk-auth.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 
@@ -22,7 +23,7 @@ export class StoriesController {
   async updateStory(
     @CurrentUser('id') userId: string,
     @Param('tripId') tripId: string,
-    @Body() dto: any,
+    @Body() dto: UpdateStoryDto,
   ) {
     return this.storiesService.updateStory(userId, tripId, dto);
   }

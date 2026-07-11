@@ -15,6 +15,8 @@ export interface Destination {
   mood: string;
   vehicle: Vehicle;
   image?: string;
+  // [latitude, longitude] — used to place this stop on the 3D globe.
+  coords: [number, number];
   // Theme — atmosphere colors for this leg (hex, work on a dark scrim).
   theme: {
     from: string; // gradient top
@@ -38,6 +40,7 @@ export const journey: Destination[] = [
     vehicle: "jeep",
     image: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#3a2718", to: "#1a1209", accent: "#E8A33D", particle: "sand" },
+    coords: [28.6139, 77.209],
   },
   {
     id: "rishikesh",
@@ -52,6 +55,7 @@ export const journey: Destination[] = [
     vehicle: "motorcycle",
     image: "https://images.unsplash.com/photo-1591018653367-7cd4f0f3c0a6?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#14342b", to: "#0a1a16", accent: "#34d399", particle: "leaves" },
+    coords: [30.0869, 78.2676],
   },
   {
     id: "spiti",
@@ -66,6 +70,7 @@ export const journey: Destination[] = [
     vehicle: "jeep",
     image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#1e3a5f", to: "#0a1626", accent: "#7cc4ff", particle: "snow" },
+    coords: [32.246, 78.0177],
   },
   {
     id: "leh",
@@ -80,6 +85,7 @@ export const journey: Destination[] = [
     vehicle: "motorcycle",
     image: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#243b53", to: "#0d1b29", accent: "#9ad0ec", particle: "mist" },
+    coords: [34.1526, 77.5771],
   },
   {
     id: "goa",
@@ -94,6 +100,7 @@ export const journey: Destination[] = [
     vehicle: "van",
     image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#5a2e1a", to: "#2a1409", accent: "#ff9e5e", particle: "sun" },
+    coords: [15.2993, 74.124],
   },
   {
     id: "japan",
@@ -108,6 +115,7 @@ export const journey: Destination[] = [
     vehicle: "train",
     image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#5a2438", to: "#2a1019", accent: "#ff8fb1", particle: "petals" },
+    coords: [35.0116, 135.7681],
   },
   {
     id: "switzerland",
@@ -122,5 +130,10 @@ export const journey: Destination[] = [
     vehicle: "train",
     image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=1600&q=80&auto=format&fit=crop",
     theme: { from: "#22384d", to: "#0c1822", accent: "#a8e0ff", particle: "snow" },
+    coords: [46.5197, 7.6491],
   },
 ];
+
+export function getDestination(id: string): Destination | undefined {
+  return journey.find((d) => d.id === id);
+}

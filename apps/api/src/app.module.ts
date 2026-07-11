@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -23,6 +24,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ExportsModule } from './exports/exports.module';
+import { CommentsModule } from './comments/comments.module';
 
 import { validate } from './config/env.validation';
 
@@ -73,8 +75,14 @@ import { validate } from './config/env.validation';
     NotificationsModule,
     AnalyticsModule,
     ExportsModule,
+    CommentsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Enforces the named 'short'/'long' limits registered above on every
+    // route; previously only configured, never actually applied (WV-901).
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

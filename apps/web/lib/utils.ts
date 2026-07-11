@@ -42,6 +42,25 @@ export function generateTripSlug(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// Media variants (thumbnail/medium/large) are only present when a processing
+// pipeline generated them (seed data); user uploads only have originalUrl.
+// Always render through this helper so we prefer the sized variant when it
+// exists without breaking on real uploads.
+export interface MediaLike {
+  variants?: Record<string, { url: string }> | null;
+  originalUrl: string;
+}
+
+export function mediaSrc(media: MediaLike, size: "large" | "medium" | "thumbnail" = "large"): string {
+  const order: ("large" | "medium" | "thumbnail")[] =
+    size === "thumbnail" ? ["thumbnail", "medium", "large"] : size === "medium" ? ["medium", "large"] : ["large", "medium"];
+  for (const key of order) {
+    const url = media.variants?.[key]?.url;
+    if (url) return url;
+  }
+  return media.originalUrl;
+}
+
 export function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
 }

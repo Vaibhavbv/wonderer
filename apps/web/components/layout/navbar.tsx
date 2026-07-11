@@ -5,10 +5,14 @@ import Link from "next/link";
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { Compass, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { cn } from "@/lib/utils";
+import { useMyUsername } from "@/lib/use-my-username";
 
 export function Navbar() {
   const { isSignedIn } = useUser();
+  const username = useMyUsername();
+  const profileHref = username ? `/profiles/${username}` : "/dashboard";
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -41,21 +45,35 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
+            <Link href="/" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+              Home
+            </Link>
             <Link href="/discover" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
               Discover
             </Link>
-            <Link href="/pricing" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
-              Pricing
+            <Link href="/destinations" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+              Inspiration
             </Link>
-            <Link href="/about" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
-              About
-            </Link>
+            {!isSignedIn && (
+              <>
+                <Link href="/pricing" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+                  Pricing
+                </Link>
+                <Link href="/about" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+                  About
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
             {isSignedIn ? (
               <>
+                <NotificationBell />
+                <Link href={profileHref}>
+                  <Button variant="ghost" size="sm">Profile</Button>
+                </Link>
                 <Link href="/dashboard">
                   <Button variant="ghost" size="sm">Dashboard</Button>
                 </Link>
@@ -87,22 +105,36 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-border">
           <div className="px-4 py-4 space-y-3">
+            <Link href="/" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
+              Home
+            </Link>
             <Link href="/discover" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
               Discover
             </Link>
-            <Link href="/pricing" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
-              Pricing
+            <Link href="/destinations" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
+              Inspiration
             </Link>
-            <Link href="/about" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
-              About
-            </Link>
+            {!isSignedIn && (
+              <>
+                <Link href="/pricing" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
+                  Pricing
+                </Link>
+                <Link href="/about" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
+                  About
+                </Link>
+              </>
+            )}
             <div className="pt-3 border-t border-border flex gap-3">
               {isSignedIn ? (
                 <>
-                  <Link href="/dashboard" className="flex-1">
+                  <Link href={profileHref} className="flex-1" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" fullWidth size="sm">Profile</Button>
+                  </Link>
+                  <Link href="/dashboard" className="flex-1" onClick={() => setMobileOpen(false)}>
                     <Button variant="outline" fullWidth size="sm">Dashboard</Button>
                   </Link>
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-1">
+                    <NotificationBell />
                     <UserButton afterSignOutUrl="/" />
                   </div>
                 </>
