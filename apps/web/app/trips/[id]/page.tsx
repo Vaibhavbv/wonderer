@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TripDetail } from "@/components/trips/trip-detail";
 import { getTrip } from "@/lib/trip-api";
 import { ApiError } from "@/lib/api";
@@ -22,11 +22,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-20">
+    <AppSidebar>
+      <div className="pt-2 sm:pt-4">
         <TripDetail trip={trip} />
-      </main>
-    </div>
+      </div>
+    </AppSidebar>
   );
 }

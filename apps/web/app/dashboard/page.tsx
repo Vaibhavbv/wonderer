@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { Navbar } from "@/components/layout/navbar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TripGrid } from "@/components/dashboard/trip-grid";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { CreateTripButton } from "@/components/dashboard/create-trip-button";
@@ -30,9 +30,8 @@ export default async function DashboardPage() {
   ).size;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="pt-20 pb-16">
+    <AppSidebar>
+      <div className="pb-16 pt-8 sm:pt-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -46,7 +45,7 @@ export default async function DashboardPage() {
             <TripGrid trips={trips} />
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppSidebar>
   );
 }
