@@ -51,7 +51,7 @@ All ✅. Note: subscription fields are **read-only** — nothing writes them (pa
 | Method | Path | Purpose | Input | Output | Status |
 |---|---|---|---|---|---|
 | GET | `/v1/trips` | List own trips | `TripListQueryDto {status?, privacy?, search?}` + pagination | trips[] + meta | ✅ |
-| POST | `/v1/trips` | Create (multi-destination) | `CreateTripDto {title, description?, startDate?, endDate?, privacy?, locations?: LocationDto[], tags?, theme?, coverPhotoId?}` | trip | ✅ (enforces `tripQuota`; auto-slug; per-location theme via `inferTheme`) |
+| POST | `/v1/trips` | Create (multi-destination) | `CreateTripDto {title, description?, startDate?, endDate?, privacy?, locations?: LocationDto[], tags?, theme?, coverPhotoId?}` | trip | ✅ (`tripQuota` not enforced — everything is free for now; auto-slug; per-location theme via `inferTheme`) |
 | GET | `/v1/trips/:id` | Full trip (locations, coverPhoto, media, collaborators, `isLiked`) | — | trip | ✅ (403 if private & not owner) |
 | PATCH | `/v1/trips/:id` | Update | `UpdateTripDto` | trip | ✅ (owner or non-VIEWER collaborator) |
 | DELETE | `/v1/trips/:id` | Delete | — | 204 | ✅ (owner only) |

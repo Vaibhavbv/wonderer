@@ -82,12 +82,15 @@ describe('TripsService', () => {
       );
     });
 
-    it('throws ForbiddenException when the trip quota is exhausted', async () => {
+    it('allows creating a trip even when the trip quota is exhausted', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: 'user-1', tripCount: 5, tripQuota: 5 });
+      prisma.trip.findUnique.mockResolvedValue(null);
+      prisma.trip.create.mockResolvedValue({ id: 'trip-1', slug: 'japan' });
+      prisma.user.update.mockResolvedValue({});
 
-      await expect(service.createTrip('user-1', { title: 'Japan' } as any)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.createTrip('user-1', { title: 'Japan' } as any),
+      ).resolves.toBeDefined();
     });
 
     it('appends a timestamp suffix when the slug already exists', async () => {
