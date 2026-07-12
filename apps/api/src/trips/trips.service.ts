@@ -72,9 +72,6 @@ export class TripsService {
   async createTrip(userId: string, dto: CreateTripDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
-    if (user.tripCount >= user.tripQuota) {
-      throw new ForbiddenException('Trip quota exceeded. Upgrade your plan.');
-    }
 
     const slug = generateSlug(dto.title);
     const existingSlug = await this.prisma.trip.findUnique({ where: { slug } });
