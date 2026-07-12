@@ -63,7 +63,7 @@ export default async function ProfilePage({
                 className="w-24 h-24 rounded-full object-cover border-2 border-border"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-2xl font-heading">
+              <div className="w-24 h-24 rounded-full bg-primary-500/15 text-primary-400 flex items-center justify-center text-2xl font-heading">
                 {initials}
               </div>
             )}

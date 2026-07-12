@@ -60,7 +60,7 @@ export function DiscoverGallery({ trips }: { trips: FeedTrip[] }) {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-100">
+              <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface-pressed">
                 {selected.coverPhoto && (
                   <img
                     src={mediaSrc(selected.coverPhoto)}
@@ -118,7 +118,7 @@ export function DiscoverGallery({ trips }: { trips: FeedTrip[] }) {
                 >
                   <Link
                     href={`/profiles/${selected.user.username}`}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-primary-600 hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-primary-600 hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)]"
                   >
                     View {selected.user.displayName ?? "traveler"}&apos;s profile
                   </Link>

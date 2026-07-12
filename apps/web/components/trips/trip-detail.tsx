@@ -21,7 +21,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative rounded-2xl overflow-hidden aspect-[21/9] mb-8 bg-secondary-100"
+        className="relative rounded-2xl overflow-hidden aspect-[21/9] mb-8 bg-surface-pressed"
       >
         {cover ? (
           <img src={cover} alt={trip.title} className="w-full h-full object-cover" />
@@ -142,7 +142,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {images.map((m) => (
-              <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-secondary-100">
+              <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-surface-pressed">
                 <img
                   src={mediaSrc(m, "medium")}
                   alt={m.caption || "Trip photo"}

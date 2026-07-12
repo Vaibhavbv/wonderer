@@ -55,10 +55,10 @@ export function PersonalHome({ me, trips, tripsTotal, feed }: PersonalHomeProps)
           {latestDraft && (
             <Link
               href={`/trips/${latestDraft.id}/edit`}
-              className="group mb-8 flex items-center justify-between rounded-2xl border border-primary-200 bg-primary-50 px-6 py-5 transition-colors hover:border-primary-400"
+              className="group mb-8 flex items-center justify-between rounded-2xl border border-primary-500/30 bg-primary-500/10 px-6 py-5 transition-colors hover:border-primary-500/60"
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-500/15 text-primary-400">
                   <PenLine className="h-5 w-5" />
                 </span>
                 <div>

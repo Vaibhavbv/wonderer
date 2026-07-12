@@ -29,7 +29,7 @@ export function UserList({ users, emptyMessage }: { users: PublicUser[]; emptyMe
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
               ) : (
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-100 font-heading text-sm text-primary-600">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-500/15 font-heading text-sm text-primary-400">
                   {initials}
                 </span>
               )}

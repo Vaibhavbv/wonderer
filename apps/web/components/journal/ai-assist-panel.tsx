@@ -256,7 +256,7 @@ export function AiAssistPanel({ trip, open, onClose, onInsertStory, onApplyTitle
                         key={t}
                         type="button"
                         onClick={() => onApplyTitle(t)}
-                        className="rounded-lg border border-border px-3 py-2 text-left text-sm text-text-primary transition-colors hover:border-primary-300 hover:bg-primary-50"
+                        className="rounded-lg border border-border px-3 py-2 text-left text-sm text-text-primary transition-colors hover:border-primary-500/50 hover:bg-primary-500/10"
                       >
                         {t}
                       </button>

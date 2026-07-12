@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useAuth, SignInButton } from "@clerk/nextjs";
 import { Heart, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn, formatRelativeDate } from "@/lib/utils";
 import { getMe } from "@/lib/api";
 import {
@@ -151,12 +152,12 @@ export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwn
               className="w-9 h-9 rounded-full object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-xs font-heading flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-primary-500/15 text-primary-400 flex items-center justify-center text-xs font-heading flex-shrink-0">
               {authorName(c.user).slice(0, 2).toUpperCase()}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <div className="bg-secondary-50 rounded-xl px-3 py-2">
+            <div className="bg-surface-pressed rounded-xl px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-text-primary">{authorName(c.user)}</span>
                 <span className="text-xs text-text-tertiary">{formatRelativeDate(c.createdAt)}</span>
@@ -185,11 +186,11 @@ export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwn
 
             {!isReply && replyTo === c.id && (
               <form onSubmit={(e) => submitReply(c.id, e)} className="flex gap-2 mt-2">
-                <input
+                <Input
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder={`Reply to ${authorName(c.user)}...`}
-                  className="flex-1 rounded-full border border-border bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+                  className="flex-1 rounded-full px-3 py-1.5"
                   autoFocus
                 />
                 <Button type="submit" size="sm" isLoading={posting} disabled={!replyText.trim()}>
@@ -206,11 +207,11 @@ export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwn
   return (
     <div id="comments" className="space-y-6">
       <form onSubmit={submitComment} className="flex gap-2">
-        <input
+        <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Add a comment..."
-          className="flex-1 rounded-full border border-border bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="flex-1 rounded-full px-4 py-2"
         />
         <Button type="submit" isLoading={posting} disabled={!text.trim()}>
           <Send className="w-4 h-4" />

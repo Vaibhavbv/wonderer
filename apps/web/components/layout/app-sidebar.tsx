@@ -45,8 +45,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-primary-50 text-primary-700"
-                  : "text-text-secondary hover:bg-secondary-50 hover:text-text-primary",
+                  ? "bg-primary-500/15 text-primary-400"
+                  : "text-text-secondary hover:bg-surface-pressed hover:text-text-primary",
               )}
             >
               <Icon className="h-5 w-5" />
@@ -93,7 +93,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
             aria-label="Open navigation"
             aria-expanded={isOpen}
             onClick={() => setIsOpen(true)}
-            className="rounded-lg p-2 text-text-primary hover:bg-secondary-50"
+            className="rounded-lg p-2 text-text-primary hover:bg-surface-pressed"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -113,7 +113,7 @@ export function AppSidebar({ children }: { children: ReactNode }) {
               type="button"
               aria-label="Close navigation"
               onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 rounded-lg p-2 text-text-secondary hover:bg-secondary-50"
+              className="absolute right-4 top-4 rounded-lg p-2 text-text-secondary hover:bg-surface-pressed"
             >
               <X className="h-5 w-5" />
             </button>

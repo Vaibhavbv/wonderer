@@ -21,9 +21,9 @@ export function ClaimUsernameBanner() {
   if (!me || me.username || dismissed) return null;
 
   return (
-    <div className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-primary-200 bg-primary-50 px-5 py-4">
+    <div className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-primary-500/30 bg-primary-500/10 px-5 py-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-500/15 text-primary-400">
           <AtSign className="h-4.5 w-4.5" />
         </span>
         <p className="text-sm text-text-primary">

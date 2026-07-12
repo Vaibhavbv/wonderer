@@ -6,11 +6,10 @@ import { useAuth } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
 import { AtSign, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api";
 import { getMyProfile, updateMe, type MeProfile } from "@/lib/users-api";
-
-const inputClass =
-  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500";
 
 const BIO_MAX = 500;
 
@@ -121,7 +120,7 @@ export function ProfileEditor() {
         {avatarUrl ? (
           <img src={avatarUrl} alt="Avatar preview" className="h-16 w-16 rounded-full border-2 border-border object-cover" />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 font-heading text-xl text-primary-600">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-500/15 font-heading text-xl text-primary-400">
             {initials}
           </div>
         )}
@@ -138,21 +137,21 @@ export function ProfileEditor() {
       <div className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium text-text-primary">Display name</label>
-          <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputClass} maxLength={100} />
+          <Input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={100} />
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text-primary">Username</label>
           <div className="relative">
             <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
-            <input
+            <Input
               type="text"
               value={username}
               onChange={(e) => {
                 setUsername(e.target.value);
                 setUsernameError(null);
               }}
-              className={`${inputClass} pl-9 ${usernameError ? "border-error focus:ring-error" : ""}`}
+              className={`pl-9 ${usernameError ? "border-error focus-visible:border-error focus-visible:ring-error/30" : ""}`}
               placeholder="your-handle"
               maxLength={50}
             />
@@ -169,11 +168,11 @@ export function ProfileEditor() {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text-primary">Bio</label>
-          <textarea
+          <Textarea
             value={bio}
             onChange={(e) => setBio(e.target.value.slice(0, BIO_MAX))}
             rows={3}
-            className={inputClass}
+           
             placeholder="Where you've been, where you're headed…"
           />
           <p className="mt-1 text-right text-xs text-text-tertiary">
@@ -184,17 +183,17 @@ export function ProfileEditor() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-text-primary">Location</label>
-            <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className={inputClass} placeholder="Lisbon, Portugal" maxLength={100} />
+            <Input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Lisbon, Portugal" maxLength={100} />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text-primary">Website</label>
-            <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} placeholder="https://…" maxLength={200} />
+            <Input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" maxLength={200} />
           </div>
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text-primary">Avatar URL</label>
-          <input type="url" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} className={inputClass} placeholder="https://…/you.jpg" />
+          <Input type="url" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…/you.jpg" />
         </div>
 
         {error && <p className="text-sm text-error">{error}</p>}

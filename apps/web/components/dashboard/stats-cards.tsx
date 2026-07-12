@@ -12,10 +12,10 @@ export interface DashboardStats {
 
 export function StatsCards({ stats }: { stats: DashboardStats }) {
   const cards = [
-    { label: "Trips", value: stats.trips, icon: Map, color: "bg-primary-100 text-primary-600" },
-    { label: "Photos", value: stats.photos, icon: Camera, color: "bg-accent-100 text-accent-600" },
-    { label: "Stories", value: stats.stories, icon: ImageIcon, color: "bg-secondary-100 text-secondary-600" },
-    { label: "Countries", value: stats.countries, icon: Globe, color: "bg-primary-100 text-primary-600" },
+    { label: "Trips", value: stats.trips, icon: Map, color: "bg-primary-500/15 text-primary-400" },
+    { label: "Photos", value: stats.photos, icon: Camera, color: "bg-accent-500/15 text-accent-400" },
+    { label: "Stories", value: stats.stories, icon: ImageIcon, color: "bg-secondary-500/15 text-secondary-300" },
+    { label: "Countries", value: stats.countries, icon: Globe, color: "bg-primary-500/15 text-primary-400" },
   ];
 
   return (

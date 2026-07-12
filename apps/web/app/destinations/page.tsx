@@ -29,7 +29,7 @@ export default function DestinationsPage() {
               <Link
                 key={dest.id}
                 href={`/destinations/${dest.id}`}
-                className="group block rounded-2xl border border-border overflow-hidden bg-white shadow-sm transition-shadow hover:shadow-md"
+                className="group block rounded-2xl border border-border overflow-hidden bg-surface shadow-sm transition-shadow hover:shadow-md"
               >
                 <div
                   className="relative h-40 w-full overflow-hidden"

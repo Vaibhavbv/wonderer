@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { MapPin, Calendar, Lock, Globe, Eye, Pencil, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { formatDate, mediaSrc } from "@/lib/utils";
@@ -28,7 +29,7 @@ function EditShortcut({ tripId, title }: { tripId: string; title: string }) {
         e.stopPropagation();
         router.push(`/trips/${tripId}/edit`);
       }}
-      className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-neutral-700 opacity-0 transition-opacity hover:text-primary-600 group-hover:opacity-100 focus:opacity-100"
+      className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated/90 text-text-secondary opacity-0 backdrop-blur-sm transition-opacity hover:text-primary-400 group-hover:opacity-100 focus:opacity-100"
       aria-label={`Edit ${title}`}
     >
       <Pencil className="h-4 w-4" />
@@ -62,7 +63,7 @@ function PublishBadge({ tripId }: { tripId: string }) {
       type="button"
       onClick={publish}
       disabled={busy}
-      className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/80 text-white transition-colors hover:bg-primary-500 disabled:opacity-60"
+      className="px-2.5 py-1 rounded-full text-xs font-semibold bg-warning/20 text-warning backdrop-blur-sm transition-colors hover:bg-primary-500 hover:text-white disabled:opacity-60"
       title="Publish this trip"
     >
       <Upload className="w-3 h-3 inline mr-1" />
@@ -98,7 +99,7 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
             <Link href={`/trips/${trip.id}`}>
             <TiltCard maxTilt={6} liftScale={1.02}>
               <Card className="overflow-hidden group cursor-pointer p-0">
-                <div className="relative aspect-[4/3] overflow-hidden bg-secondary-100">
+                <div className="relative aspect-[4/3] overflow-hidden bg-surface-pressed">
                   {cover ? (
                     <img
                       src={cover}
@@ -106,28 +107,25 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary-200 to-secondary-200" />
+                    <div className="w-full h-full bg-surface-pressed bg-gradient-to-br from-primary-500/25 to-secondary-500/25" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        trip.privacy === "PUBLIC"
-                          ? "bg-green-500/80 text-white"
-                          : trip.privacy === "UNLISTED"
-                          ? "bg-yellow-500/80 text-white"
-                          : "bg-gray-500/80 text-white"
-                      }`}
+                    <Badge
+                      variant={
+                        trip.privacy === "PUBLIC" ? "success" : trip.privacy === "UNLISTED" ? "warning" : "neutral"
+                      }
+                      className="backdrop-blur-sm"
                     >
                       {trip.privacy === "PUBLIC" ? (
-                        <Globe className="w-3 h-3 inline mr-1" />
+                        <Globe className="w-3 h-3" />
                       ) : trip.privacy === "UNLISTED" ? (
-                        <Eye className="w-3 h-3 inline mr-1" />
+                        <Eye className="w-3 h-3" />
                       ) : (
-                        <Lock className="w-3 h-3 inline mr-1" />
+                        <Lock className="w-3 h-3" />
                       )}
                       {trip.privacy}
-                    </span>
+                    </Badge>
                     {trip.status === "DRAFT" && <PublishBadge tripId={trip.id} />}
                   </div>
                   <EditShortcut tripId={trip.id} title={trip.title} />

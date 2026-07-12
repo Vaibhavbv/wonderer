@@ -20,7 +20,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-1.5 text-sm text-text-secondary shadow-sm"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 backdrop-blur px-4 py-1.5 text-sm text-text-secondary shadow-sm"
         >
           <MapPin className="w-4 h-4 text-primary-500" />
           The social network for travel

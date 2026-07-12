@@ -27,7 +27,7 @@ export function Navbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-white/80 backdrop-blur-xl border-b border-border shadow-sm"
+          ? "bg-background/70 backdrop-blur-md border-b border-border/60 shadow-sm"
           : "bg-transparent"
       )}
     >
@@ -103,7 +103,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-border">
+        <div className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border">
           <div className="px-4 py-4 space-y-3">
             <Link href="/" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
               Home

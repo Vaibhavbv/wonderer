@@ -43,7 +43,7 @@ export function NotificationBell({ variant = "light" }: { variant?: "light" | "d
           "relative p-2 rounded-full transition-colors",
           variant === "dark"
             ? "text-white/80 hover:text-white hover:bg-white/10"
-            : "text-text-secondary hover:text-primary-600 hover:bg-secondary-100",
+            : "text-text-secondary hover:text-primary-400 hover:bg-surface-pressed",
         )}
         aria-label="Notifications"
       >
@@ -56,7 +56,7 @@ export function NotificationBell({ variant = "light" }: { variant?: "light" | "d
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-border bg-white shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-border bg-surface-elevated shadow-lg z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <span className="text-sm font-medium text-text-primary">Notifications</span>
             {unreadCount > 0 && (
@@ -72,7 +72,7 @@ export function NotificationBell({ variant = "light" }: { variant?: "light" | "d
               {items.map((n) => {
                 const href = notificationHref(n);
                 const content = (
-                  <div className={cn("px-4 py-3 border-b border-border last:border-0", !n.read && "bg-primary-50")}>
+                  <div className={cn("px-4 py-3 border-b border-border last:border-0", !n.read && "bg-primary-500/10")}>
                     <p className="text-sm text-text-primary">{n.title}</p>
                     <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{n.body}</p>
                     <p className="text-xs text-text-tertiary mt-1">{formatRelativeDate(n.createdAt)}</p>

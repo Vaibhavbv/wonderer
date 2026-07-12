@@ -53,7 +53,7 @@ export function KineticShowcase({ trips }: { trips: FeedTrip[] }) {
             return (
               <div
                 key={trip.id}
-                className={`relative shrink-0 ${SIZES[i % SIZES.length]} overflow-hidden rounded-2xl bg-neutral-100`}
+                className={`relative shrink-0 ${SIZES[i % SIZES.length]} overflow-hidden rounded-2xl bg-surface-pressed`}
               >
                 {cover ? (
                   <img
