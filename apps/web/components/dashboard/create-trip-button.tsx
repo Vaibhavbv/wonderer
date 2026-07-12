@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Plus, X, ImagePlus, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { createTrip, updateTrip } from "@/lib/trip-api";
 import { uploadTripPhotos } from "@/lib/upload";
 
@@ -128,24 +132,25 @@ export function CreateTripButton() {
         <Plus className="w-4 h-4 mr-2" />
         New Trip
       </Button>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-surface rounded-2xl p-8 max-w-lg w-full mx-4 shadow-xl max-h-[85vh] overflow-y-auto">
-            <h2 className="font-heading text-2xl font-bold text-text-primary mb-2">Create New Trip</h2>
-            <p className="text-text-secondary mb-6">
+      <Dialog open={isOpen} onOpenChange={(open) => (open ? setIsOpen(true) : close())}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Trip</DialogTitle>
+            <DialogDescription>
               Add the places you went, a memory for each, and a few photos — we&apos;ll build the page and match
               the atmosphere to each destination.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Trip Title</label>
-                <input
+                <Label htmlFor="trip-title">Trip Title</Label>
+                <Input
+                  id="trip-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Kyoto Cherry Blossom Season"
-                  className="w-full px-4 py-2 rounded-lg border border-border bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
@@ -166,45 +171,40 @@ export function CreateTripButton() {
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <input
+                      <Input
                         type="text"
                         value={dest.name}
                         onChange={(e) => updateDestination(dest.key, { name: e.target.value })}
                         placeholder="Place name"
-                        className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
-                      <input
+                      <Input
                         type="text"
                         value={dest.country}
                         onChange={(e) => updateDestination(dest.key, { country: e.target.value })}
                         placeholder="Country (optional)"
-                        className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
                     </div>
-                    <textarea
+                    <Textarea
                       value={dest.notes}
                       onChange={(e) => updateDestination(dest.key, { notes: e.target.value })}
                       placeholder="The memory you want to keep from here..."
                       rows={2}
-                      className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                     {dest.showCoords ? (
                       <div className="grid grid-cols-2 gap-3">
-                        <input
+                        <Input
                           type="number"
                           step="any"
                           value={dest.latitude}
                           onChange={(e) => updateDestination(dest.key, { latitude: e.target.value })}
                           placeholder="Latitude (−90…90)"
-                          className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
-                        <input
+                        <Input
                           type="number"
                           step="any"
                           value={dest.longitude}
                           onChange={(e) => updateDestination(dest.key, { longitude: e.target.value })}
                           placeholder="Longitude (−180…180)"
-                          className="px-3 py-2 rounded-lg border border-border bg-surface text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                         <p className="col-span-2 text-xs text-text-tertiary">
                           These place the pin on your journey globe. Blank is fine — set them later in Edit trip.
@@ -214,7 +214,7 @@ export function CreateTripButton() {
                       <button
                         type="button"
                         onClick={() => updateDestination(dest.key, { showCoords: true })}
-                        className="flex items-center gap-1.5 text-xs text-text-tertiary hover:text-primary-600"
+                        className="flex items-center gap-1.5 text-xs text-text-tertiary hover:text-primary-400"
                       >
                         <MapPin className="w-3.5 h-3.5" />
                         Add coordinates (places the globe pin)
@@ -238,7 +238,7 @@ export function CreateTripButton() {
               <button
                 type="button"
                 onClick={addDestination}
-                className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium"
+                className="flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300 font-medium"
               >
                 <Plus className="w-4 h-4" />
                 Add another destination
@@ -247,17 +247,16 @@ export function CreateTripButton() {
               {error && <p className="text-sm text-error">{error}</p>}
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <Button variant="outline" fullWidth onClick={close} disabled={submitting}>
-                Cancel
-              </Button>
-              <Button fullWidth onClick={handleCreate} isLoading={submitting}>
-                Create Trip
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" fullWidth onClick={close} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button fullWidth onClick={handleCreate} isLoading={submitting}>
+              Create Trip
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

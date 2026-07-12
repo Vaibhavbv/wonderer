@@ -27,7 +27,7 @@ export function Navbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-white/80 backdrop-blur-xl border-b border-border shadow-sm"
+          ? "bg-background/70 backdrop-blur-md border-b border-border/60 shadow-sm"
           : "bg-transparent"
       )}
     >
@@ -45,21 +45,21 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+            <Link href="/" className="nav-underline text-sm font-medium text-text-secondary hover:text-primary-400 transition-colors">
               Home
             </Link>
-            <Link href="/discover" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+            <Link href="/discover" className="nav-underline text-sm font-medium text-text-secondary hover:text-primary-400 transition-colors">
               Discover
             </Link>
-            <Link href="/destinations" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+            <Link href="/destinations" className="nav-underline text-sm font-medium text-text-secondary hover:text-primary-400 transition-colors">
               Inspiration
             </Link>
             {!isSignedIn && (
               <>
-                <Link href="/pricing" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+                <Link href="/pricing" className="nav-underline text-sm font-medium text-text-secondary hover:text-primary-400 transition-colors">
                   Pricing
                 </Link>
-                <Link href="/about" className="text-sm font-medium text-text-secondary hover:text-primary-600 transition-colors">
+                <Link href="/about" className="nav-underline text-sm font-medium text-text-secondary hover:text-primary-400 transition-colors">
                   About
                 </Link>
               </>
@@ -103,7 +103,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-border">
+        <div className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border">
           <div className="px-4 py-4 space-y-3">
             <Link href="/" className="block text-base font-medium text-text-secondary" onClick={() => setMobileOpen(false)}>
               Home

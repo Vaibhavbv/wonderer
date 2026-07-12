@@ -55,7 +55,7 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -82,24 +82,24 @@ export function PricingSection() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className={`rounded-2xl p-8 ${
                 plan.highlighted
-                  ? "bg-secondary-800 text-white ring-4 ring-primary-500/20"
+                  ? "bg-surface-elevated border-2 border-primary-500/50 shadow-[var(--shadow-glow)]"
                   : "bg-surface border border-border"
               }`}
             >
               <div className="mb-6">
-                <h3 className={`font-heading text-xl font-semibold ${plan.highlighted ? "text-white" : "text-text-primary"}`}>
+                <h3 className="font-heading text-xl font-semibold text-text-primary">
                   {plan.name}
                 </h3>
-                <p className={`text-sm mt-1 ${plan.highlighted ? "text-white/60" : "text-text-tertiary"}`}>
+                <p className="text-sm mt-1 text-text-tertiary">
                   {plan.description}
                 </p>
               </div>
 
               <div className="mb-6">
-                <span className={`text-4xl font-bold ${plan.highlighted ? "text-white" : "text-text-primary"}`}>
+                <span className="text-4xl font-bold text-text-primary">
                   {plan.price}
                 </span>
-                <span className={plan.highlighted ? "text-white/60" : "text-text-tertiary"}>
+                <span className="text-text-tertiary">
                   {plan.period}
                 </span>
               </div>
@@ -107,8 +107,8 @@ export function PricingSection() {
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-3">
-                    <Check className={`w-5 h-5 mt-0.5 flex-shrink-0 ${plan.highlighted ? "text-primary-400" : "text-primary-500"}`} />
-                    <span className={`text-sm ${plan.highlighted ? "text-white/80" : "text-text-secondary"}`}>
+                    <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary-400" />
+                    <span className="text-sm text-text-secondary">
                       {feature}
                     </span>
                   </li>

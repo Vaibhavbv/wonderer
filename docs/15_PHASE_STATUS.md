@@ -4,7 +4,7 @@
 
 ---
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-12
 **Current phase:** **Flagship travel-journal upgrade — ✅ COMPLETE** (user-directed feature pass; supersedes the "await Phase 1 kickoff" hold — the user explicitly requested this work)
 **Release line:** V2 (`v2` branch exists on origin)
 **Working branch for this effort:** `claude/init-ke8snz`
@@ -12,7 +12,13 @@
 
 ---
 
-## Current effort — Flagship travel-journal upgrade (2026-07-10) ✅ COMPLETE
+## Current effort — Dark theme unification (2026-07-12) ✅ COMPLETE
+
+**Objective (user-directed, ADR-018):** one modern dark theme across the whole app + shadcn-style primitives. Semantic tokens in `globals.css` flipped to warm charcoal; coral #FF5A4D stays the only accent; Playfair headings unchanged. New `Dialog/Input/Textarea/Label/Badge/Separator` primitives (Radix via npm); Button/Card reskinned; footer/CTA/pricing dark bands reworked as elevated sections; Clerk renders dark. Raw `bg-white`/neutral/green/yellow utilities are now banned — grep gates in `20_CHANGELOG.md` entry. Wander view untouched (already cinematic dark).
+
+---
+
+## Previous effort — Flagship travel-journal upgrade (2026-07-10) ✅ COMPLETE
 
 **Objective (user-directed):** make the site a flagship travel journal with a personal signed-in experience. Full detail in [`20_CHANGELOG.md`](./20_CHANGELOG.md) (top entry) + ADR-016/017.
 

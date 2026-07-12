@@ -28,7 +28,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   return (
     <AppSidebar>
       <div className="pt-2 sm:pt-4">
-        <TripDetail trip={trip} />
+        <TripDetail trip={trip} viewerIsOwner={viewerIsOwner} />
       </div>
     </AppSidebar>
   );

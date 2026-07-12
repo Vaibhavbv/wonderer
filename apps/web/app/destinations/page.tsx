@@ -16,7 +16,7 @@ export default function DestinationsPage() {
       <main className="pt-28 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <header className="mb-10 max-w-2xl">
-            <p className="text-sm uppercase tracking-widest text-primary-600">Inspiration</p>
+            <p className="text-sm uppercase tracking-widest text-primary-400">Inspiration</p>
             <h1 className="mt-2 font-heading text-4xl sm:text-5xl text-text-primary">One journey, told the Wanderverse way</h1>
             <p className="mt-3 text-lg text-text-secondary">
               A demo trip from Delhi to the Alps showing what your own travels become — every stop below is
@@ -29,7 +29,7 @@ export default function DestinationsPage() {
               <Link
                 key={dest.id}
                 href={`/destinations/${dest.id}`}
-                className="group block rounded-2xl border border-border overflow-hidden bg-white shadow-sm transition-shadow hover:shadow-md"
+                className="group block rounded-2xl border border-border overflow-hidden bg-surface shadow-sm transition-shadow hover:shadow-md"
               >
                 <div
                   className="relative h-40 w-full overflow-hidden"

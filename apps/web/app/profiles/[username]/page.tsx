@@ -63,7 +63,7 @@ export default async function ProfilePage({
                 className="w-24 h-24 rounded-full object-cover border-2 border-border"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-2xl font-heading">
+              <div className="w-24 h-24 rounded-full bg-primary-500/15 text-primary-400 flex items-center justify-center text-2xl font-heading">
                 {initials}
               </div>
             )}
@@ -86,11 +86,11 @@ export default async function ProfilePage({
 
               <div className="flex gap-6 mt-4 text-sm">
                 <span><strong className="text-text-primary">{profile.stats.tripsCount}</strong> <span className="text-text-secondary">trips</span></span>
-                <Link href={`/profiles/${username}/followers`} className="transition-colors hover:text-primary-600">
+                <Link href={`/profiles/${username}/followers`} className="transition-colors hover:text-primary-400">
                   <strong className="text-text-primary">{profile.stats.followersCount}</strong>{" "}
                   <span className="text-text-secondary">followers</span>
                 </Link>
-                <Link href={`/profiles/${username}/following`} className="transition-colors hover:text-primary-600">
+                <Link href={`/profiles/${username}/following`} className="transition-colors hover:text-primary-400">
                   <strong className="text-text-primary">{profile.stats.followingCount}</strong>{" "}
                   <span className="text-text-secondary">following</span>
                 </Link>

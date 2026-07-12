@@ -242,7 +242,7 @@ export function JournalEditor({ trip, canEdit }: { trip: TripRecord; canEdit: bo
             <div className="flex items-center gap-2 text-xs text-text-tertiary">
               {story && <span>v{story.version}</span>}
               {dirty && (
-                <span className="flex items-center gap-1.5 text-primary-600">
+                <span className="flex items-center gap-1.5 text-primary-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
                   Unsaved changes
                 </span>

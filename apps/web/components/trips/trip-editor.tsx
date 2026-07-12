@@ -18,7 +18,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { mediaSrc } from "@/lib/utils";
 import { uploadTripPhotos } from "@/lib/upload";
 import {
@@ -41,10 +44,8 @@ const PRIVACY_OPTIONS = [
   { value: "PUBLIC", label: "Public", hint: "Shows on Discover and your profile" },
 ] as const;
 
-const inputClass =
-  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500";
 
-function Card({ title, subtitle, children, delay = 0 }: { title: string; subtitle?: string; children: React.ReactNode; delay?: number }) {
+function EditorSection({ title, subtitle, children, delay = 0 }: { title: string; subtitle?: string; children: React.ReactNode; delay?: number }) {
   const prefersReduced = useReducedMotion();
   return (
     <motion.section
@@ -322,7 +323,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
       {/* Page header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
         <div>
-          <p className="text-sm uppercase tracking-widest text-primary-600">Edit trip</p>
+          <p className="text-sm uppercase tracking-widest text-primary-400">Edit trip</p>
           <h1 className="mt-1 font-heading text-3xl text-text-primary">{title || initialTrip.title}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -351,37 +352,37 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
       )}
 
       {/* Details */}
-      <Card title="Details" subtitle="Title, dates, tags and who can see this trip.">
+      <EditorSection title="Details" subtitle="Title, dates, tags and who can see this trip.">
         <div className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-text-primary">Title</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
+            <Input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text-primary">Description</label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className={inputClass}
+             
               placeholder="What was this journey about?"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-text-primary">Start date</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-text-primary">End date</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-text-primary">Tags</label>
             <div className="flex flex-wrap items-center gap-2">
               {tags.map((tag) => (
-                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700">
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary-500/15 px-3 py-1 text-xs font-medium text-primary-400">
                   {tag}
                   <button type="button" onClick={() => setTags((prev) => prev.filter((t) => t !== tag))} aria-label={`Remove tag ${tag}`}>
                     <X className="h-3 w-3" />
@@ -414,7 +415,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
                   onClick={() => setPrivacy(opt.value)}
                   className={`rounded-xl border p-3 text-left transition-colors ${
                     privacy === opt.value
-                      ? "border-primary-500 bg-primary-50"
+                      ? "border-primary-500 bg-primary-500/10"
                       : "border-border bg-surface hover:border-primary-200"
                   }`}
                 >
@@ -437,22 +438,18 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             </Button>
           </div>
         </div>
-      </Card>
+      </EditorSection>
 
       {/* Publish */}
-      <Card
+      <EditorSection
         title="Publish"
         subtitle="Published trips appear on your public profile — and on Discover when the trip is public."
         delay={0.05}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              status === "PUBLISHED" ? "bg-success/10 text-success" : "bg-accent-100 text-accent-700"
-            }`}
-          >
+          <Badge variant={status === "PUBLISHED" ? "success" : "warning"} className="px-3 py-1">
             {status === "PUBLISHED" ? "Published" : status === "ARCHIVED" ? "Archived" : "Draft"}
-          </span>
+          </Badge>
           <Button
             variant={status === "PUBLISHED" ? "outline" : "primary"}
             onClick={togglePublish}
@@ -461,10 +458,10 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             {status === "PUBLISHED" ? "Unpublish" : "Publish trip"}
           </Button>
         </div>
-      </Card>
+      </EditorSection>
 
       {/* Photos */}
-      <Card title="Photos" subtitle="Add memories, remove the misfires, and pick your cover." delay={0.1}>
+      <EditorSection title="Photos" subtitle="Add memories, remove the misfires, and pick your cover." delay={0.1}>
         <div className="mb-4">
           <input
             ref={fileInputRef}
@@ -501,7 +498,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
                     <button
                       type="button"
                       onClick={() => setCover(m.id)}
-                      className="rounded bg-white/90 px-2 py-1 text-[11px] font-medium text-neutral-800 hover:bg-white"
+                      className="rounded-md bg-surface-elevated/90 px-2 py-1 text-[11px] font-medium text-text-primary backdrop-blur-sm hover:bg-surface-elevated"
                     >
                       Set cover
                     </button>
@@ -511,7 +508,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
                   <button
                     type="button"
                     onClick={() => removePhoto(m.id)}
-                    className="rounded bg-white/90 p-1 text-error hover:bg-white"
+                    className="rounded-md bg-surface-elevated/90 p-1 text-error backdrop-blur-sm hover:bg-surface-elevated"
                     aria-label="Delete photo"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -521,10 +518,10 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             ))}
           </div>
         )}
-      </Card>
+      </EditorSection>
 
       {/* Locations */}
-      <Card
+      <EditorSection
         title="Itinerary"
         subtitle="Each stop is a pin on your journey globe — coordinates place it in the world."
         delay={0.15}
@@ -536,7 +533,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
               <div key={loc.id} className="rounded-xl border border-border p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium text-text-primary">
-                    <MapPin className="h-4 w-4 text-primary-600" />
+                    <MapPin className="h-4 w-4 text-primary-400" />
                     Stop {idx + 1}
                   </span>
                   <div className="flex items-center gap-1">
@@ -569,43 +566,43 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <input
+                  <Input
                     type="text"
                     value={draft.name}
                     onChange={(e) => updateDraft(loc.id, { name: e.target.value })}
                     placeholder="Place name"
-                    className={inputClass}
+                   
                   />
-                  <input
+                  <Input
                     type="text"
                     value={draft.country}
                     onChange={(e) => updateDraft(loc.id, { country: e.target.value })}
                     placeholder="Country"
-                    className={inputClass}
+                   
                   />
-                  <input
+                  <Input
                     type="number"
                     step="any"
                     value={draft.latitude}
                     onChange={(e) => updateDraft(loc.id, { latitude: e.target.value })}
                     placeholder="Latitude (−90…90)"
-                    className={inputClass}
+                   
                   />
-                  <input
+                  <Input
                     type="number"
                     step="any"
                     value={draft.longitude}
                     onChange={(e) => updateDraft(loc.id, { longitude: e.target.value })}
                     placeholder="Longitude (−180…180)"
-                    className={inputClass}
+                   
                   />
                 </div>
-                <textarea
+                <Textarea
                   value={draft.notes}
                   onChange={(e) => updateDraft(loc.id, { notes: e.target.value })}
                   placeholder="The memory you want to keep from here…"
                   rows={2}
-                  className={`mt-3 ${inputClass}`}
+                  className="mt-3"
                 />
                 <div className="mt-3 flex justify-end">
                   <Button size="sm" variant="outline" onClick={() => saveLocation(loc)} isLoading={savingLocationId === loc.id}>
@@ -620,17 +617,17 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             <div className="rounded-xl border-2 border-dashed border-primary-200 p-4">
               <p className="mb-3 text-sm font-medium text-text-primary">New stop</p>
               <div className="grid grid-cols-2 gap-3">
-                <input type="text" value={newLocation.name} onChange={(e) => setNewLocation((p) => ({ ...p, name: e.target.value }))} placeholder="Place name" className={inputClass} />
-                <input type="text" value={newLocation.country} onChange={(e) => setNewLocation((p) => ({ ...p, country: e.target.value }))} placeholder="Country" className={inputClass} />
-                <input type="number" step="any" value={newLocation.latitude} onChange={(e) => setNewLocation((p) => ({ ...p, latitude: e.target.value }))} placeholder="Latitude (−90…90)" className={inputClass} />
-                <input type="number" step="any" value={newLocation.longitude} onChange={(e) => setNewLocation((p) => ({ ...p, longitude: e.target.value }))} placeholder="Longitude (−180…180)" className={inputClass} />
+                <Input type="text" value={newLocation.name} onChange={(e) => setNewLocation((p) => ({ ...p, name: e.target.value }))} placeholder="Place name" />
+                <Input type="text" value={newLocation.country} onChange={(e) => setNewLocation((p) => ({ ...p, country: e.target.value }))} placeholder="Country" />
+                <Input type="number" step="any" value={newLocation.latitude} onChange={(e) => setNewLocation((p) => ({ ...p, latitude: e.target.value }))} placeholder="Latitude (−90…90)" />
+                <Input type="number" step="any" value={newLocation.longitude} onChange={(e) => setNewLocation((p) => ({ ...p, longitude: e.target.value }))} placeholder="Longitude (−180…180)" />
               </div>
-              <textarea
+              <Textarea
                 value={newLocation.notes}
                 onChange={(e) => setNewLocation((p) => ({ ...p, notes: e.target.value }))}
                 placeholder="The memory you want to keep from here…"
                 rows={2}
-                className={`mt-3 ${inputClass}`}
+                className="mt-3"
               />
               <div className="mt-3 flex justify-end gap-2">
                 <Button size="sm" variant="ghost" onClick={() => setShowAddForm(false)}>
@@ -645,7 +642,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             <button
               type="button"
               onClick={() => setShowAddForm(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-4 text-sm font-medium text-primary-600 transition-colors hover:border-primary-300 hover:bg-primary-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-4 text-sm font-medium text-primary-400 transition-colors hover:border-primary-500/50 hover:bg-primary-500/10"
             >
               <Plus className="h-4 w-4" />
               Add a stop
@@ -656,16 +653,16 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             <p className="flex items-center gap-1.5 text-xs text-text-tertiary">
               <Globe2 className="h-3.5 w-3.5" />
               Changed coordinates?{" "}
-              <Link href={`/trips/${initialTrip.id}/wander`} className="text-primary-600 hover:underline">
+              <Link href={`/trips/${initialTrip.id}/wander`} className="text-primary-400 hover:underline">
                 View on globe
               </Link>
             </p>
           )}
         </div>
-      </Card>
+      </EditorSection>
 
       {/* Danger zone */}
-      <Card title="Danger zone" delay={0.2}>
+      <EditorSection title="Danger zone" delay={0.2}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-text-secondary">
             Deleting a trip removes its locations, photos, story and comments. There is no undo.
@@ -686,7 +683,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             </Button>
           )}
         </div>
-      </Card>
+      </EditorSection>
     </div>
   );
 }

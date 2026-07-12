@@ -38,7 +38,7 @@ export function PersonalHome({ me, trips, tripsTotal, feed }: PersonalHomeProps)
           {/* Greeting */}
           <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-widest text-primary-600">Your travel world</p>
+              <p className="text-sm uppercase tracking-widest text-primary-400">Your travel world</p>
               <h1 className="mt-2 font-heading text-4xl text-text-primary sm:text-5xl">
                 Welcome back{firstName ? `, ${firstName}` : ", traveler"}
               </h1>
@@ -55,18 +55,18 @@ export function PersonalHome({ me, trips, tripsTotal, feed }: PersonalHomeProps)
           {latestDraft && (
             <Link
               href={`/trips/${latestDraft.id}/edit`}
-              className="group mb-8 flex items-center justify-between rounded-2xl border border-primary-200 bg-primary-50 px-6 py-5 transition-colors hover:border-primary-400"
+              className="group mb-8 flex items-center justify-between rounded-2xl border border-primary-500/30 bg-primary-500/10 px-6 py-5 transition-colors hover:border-primary-500/60"
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-500/15 text-primary-400">
                   <PenLine className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-sm text-primary-700">Continue where you left off</p>
+                  <p className="text-sm text-primary-400">Continue where you left off</p>
                   <p className="font-heading text-lg text-text-primary">{latestDraft.title}</p>
                 </div>
               </div>
-              <ArrowRight className="h-5 w-5 text-primary-600 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-5 w-5 text-primary-400 transition-transform group-hover:translate-x-1" />
             </Link>
           )}
 
@@ -79,7 +79,7 @@ export function PersonalHome({ me, trips, tripsTotal, feed }: PersonalHomeProps)
                 <h2 className="font-heading text-2xl text-text-primary">From travelers you follow</h2>
                 <p className="mt-1 text-sm text-text-secondary">Fresh journeys from your corner of the world.</p>
               </div>
-              <Link href="/discover" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+              <Link href="/discover" className="text-sm font-medium text-primary-400 hover:text-primary-300">
                 Discover more →
               </Link>
             </div>

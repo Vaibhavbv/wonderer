@@ -19,7 +19,7 @@ export function TripCard({ trip }: { trip: FeedTrip }) {
 
   return (
     <article className="group overflow-hidden rounded-xl bg-surface border border-border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-      <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
+      <div className="relative aspect-[4/3] overflow-hidden bg-surface-pressed">
         {cover ? (
           <img
             src={cover}
@@ -28,16 +28,16 @@ export function TripCard({ trip }: { trip: FeedTrip }) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-neutral-400">No cover</div>
+          <div className="flex h-full w-full items-center justify-center text-text-tertiary">No cover</div>
         )}
         {trip.locations.length > 0 && (
-          <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-neutral-700 backdrop-blur">
+          <span className="absolute left-3 top-3 rounded-full bg-surface-elevated/90 px-2.5 py-1 text-xs font-medium text-text-secondary backdrop-blur">
             {trip.locations.length} {trip.locations.length === 1 ? "stop" : "stops"}
           </span>
         )}
       </div>
       <div className="p-4">
-        <p className="text-xs uppercase tracking-wide text-primary-600">{formatRange(trip.startDate, trip.endDate)}</p>
+        <p className="text-xs uppercase tracking-wide text-primary-400">{formatRange(trip.startDate, trip.endDate)}</p>
         <h3 className="mt-1 font-heading text-xl leading-snug text-text-primary">{trip.title}</h3>
         {placeLabel && <p className="mt-1 text-sm text-text-secondary">{placeLabel}</p>}
         <div className="mt-3 flex items-center gap-4 text-sm text-text-tertiary">

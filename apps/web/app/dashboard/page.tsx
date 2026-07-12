@@ -50,7 +50,7 @@ export default async function DashboardPage() {
               <h2 className="font-heading text-2xl text-text-primary">We couldn&apos;t reach your trips</h2>
               <p className="mx-auto mt-2 max-w-md text-text-secondary">
                 The journey server didn&apos;t answer. Your trips are safe — give it a moment and{" "}
-                <a href="/dashboard" className="text-primary-600 underline underline-offset-2">reload</a>.
+                <a href="/dashboard" className="text-primary-400 underline underline-offset-2">reload</a>.
               </p>
             </div>
           ) : (

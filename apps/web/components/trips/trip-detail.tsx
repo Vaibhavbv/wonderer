@@ -21,7 +21,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative rounded-2xl overflow-hidden aspect-[21/9] mb-8 bg-secondary-100"
+        className="relative rounded-2xl overflow-hidden aspect-[21/9] mb-8 bg-surface-pressed"
       >
         {cover ? (
           <img src={cover} alt={trip.title} className="w-full h-full object-cover" />
@@ -74,7 +74,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
             <ImageIcon className="w-4 h-4" />
             {images.length} photos
           </span>
-          <a href="#comments" className="flex items-center gap-1 hover:text-primary-600 transition-colors">
+          <a href="#comments" className="flex items-center gap-1 hover:text-primary-400 transition-colors">
             <MessageCircle className="w-4 h-4" />
             {trip.commentsCount} {trip.commentsCount === 1 ? "comment" : "comments"}
           </a>
@@ -119,7 +119,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
             {trip.locations.map((loc) => (
               <div key={loc.id} className="bg-surface border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 text-text-primary font-medium">
-                  <MapPin className="w-4 h-4 text-primary-600" />
+                  <MapPin className="w-4 h-4 text-primary-400" />
                   {loc.name}
                   {loc.country && <span className="text-text-tertiary font-normal">· {loc.country}</span>}
                 </div>
@@ -142,7 +142,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {images.map((m) => (
-              <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-secondary-100">
+              <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-surface-pressed">
                 <img
                   src={mediaSrc(m, "medium")}
                   alt={m.caption || "Trip photo"}

@@ -95,7 +95,7 @@ export function HomeFeed({ initialItems, initialCursor, followsNobody }: HomeFee
                       className="h-5 w-5 rounded-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-[10px] text-primary-600">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-500/15 text-[10px] text-primary-400">
                       {(trip.user.displayName || trip.user.username || "?")[0]?.toUpperCase()}
                     </span>
                   )}

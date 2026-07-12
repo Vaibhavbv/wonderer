@@ -82,14 +82,14 @@ export default async function DestinationPage({
           </div>
 
           {dest.favorite && (
-            <div className="mt-8 flex items-start gap-3 rounded-2xl border border-border bg-primary-50/50 p-5">
+            <div className="mt-8 flex items-start gap-3 rounded-2xl border border-border bg-primary-500/10 p-5">
               <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: dest.theme.accent }} />
               <p className="text-text-secondary">{dest.favorite}</p>
             </div>
           )}
 
           <div className="mt-10 rounded-2xl border border-border bg-surface p-6 text-center">
-            <p className="text-xs uppercase tracking-widest text-primary-600">Demo journey</p>
+            <p className="text-xs uppercase tracking-widest text-primary-400">Demo journey</p>
             <h2 className="mt-2 font-heading text-2xl text-text-primary">
               Your {dest.name} could look like this
             </h2>
