@@ -16,7 +16,7 @@ export default async function ProfileSettingsPage() {
       <main className="pt-28 pb-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <header className="mb-8 text-center">
-            <p className="text-sm uppercase tracking-widest text-primary-600">Settings</p>
+            <p className="text-sm uppercase tracking-widest text-primary-400">Settings</p>
             <h1 className="mt-2 font-heading text-3xl text-text-primary">Your profile</h1>
             <p className="mt-2 text-text-secondary">How other travelers see you.</p>
           </header>

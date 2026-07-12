@@ -20,12 +20,24 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 
 ---
 
+### Dark-theme primitives (added 2026-07-12, ADR-018)
+
+| Component | Purpose | Notes |
+|---|---|---|
+| `Dialog` (`dialog.tsx`) | Radix modal: overlay `bg-black/70 blur`, content `bg-surface-elevated rounded-2xl` | Used by create-trip. Portals content — test with `getByRole("dialog")`. |
+| `Input` / `Textarea` | THE input idiom (surface bg, coral focus ring) | Replaces the 3 duplicated `inputClass` strings; variants via className. |
+| `Label` (`label.tsx`) | Radix form label | — |
+| `Badge` (`badge.tsx`) | cva pills: primary/success/warning/neutral/outline/solid | Alpha-tint fills (`bg-success/15 text-success`). Trip privacy/status chips. |
+| `Separator` (`separator.tsx`) | Radix hairline | — |
+
+**Reskinned:** `Button` (dark ghost/outline/secondary, coral glow on primary hover, `rounded-lg`), `Card` (`hover:border-primary-500/40`). **Radius rule:** buttons/inputs `rounded-lg` · cards `rounded-xl` · modals/banners `rounded-2xl` · pills/avatars `rounded-full`.
+
 ## `components/layout/`
 
 | Component | Purpose | Key props | Deps | Reusable | Refactor notes |
 |---|---|---|---|---|---|
-| `Navbar` (`navbar.tsx`) | Light sticky navbar, scroll-aware, mobile menu, Clerk buttons, notification bell, profile link | none | Clerk, `useMyUsername`, `NotificationBell` | ⚠ page-level | **Shares logic with `JourneyNav`** — consolidation candidate. |
-| `Footer` (`footer.tsx`) | Dark footer, glow + particles | none | `GlowSurface`, `ParticleBackground` | ⚠ page-level | Contains **~10 dead links** (see 17_TECH_DEBT); social icons → `#`. |
+| `Navbar` (`navbar.tsx`) | Sticky glass navbar (`bg-background/70 blur` on scroll), `.nav-underline` links, mobile menu, Clerk buttons, bell, profile link | none | Clerk, `useMyUsername`, `NotificationBell` | ⚠ page-level | **Shares logic with `JourneyNav`** — consolidation candidate. |
+| `Footer` (`footer.tsx`) | Page-floor footer (`bg-background` + hairline top border), real routes only | none | — (RSC) | ⚠ page-level | Social icons still `#`. |
 | `NotificationBell` (`notification-bell.tsx`) | Notification dropdown, unread badge | `variant: "light"\|"dark"` | `useNotifications` | ✅ | API-backed, complete. |
 
 ---
@@ -60,7 +72,7 @@ Legend: **Reusable** = designed to be dropped in elsewhere · **RSC** = React Se
 | `FeaturesSection` | 6 feature cards, whileInView reveals | Framer Motion | ⚠ | Content hardcoded. |
 | `HowItWorksSection` | 4-step explainer | Framer Motion | ⚠ | — |
 | `PricingSection` | 3 plans; CTAs are Clerk `SignInButton`s | Clerk | ⚠ | **No Stripe wiring** (Phase 6). |
-| `CTASection` | Dark CTA band, particles + magnetic buttons | `ParticleBackground`, `Magnetic`, `GlowSurface` | ⚠ | — |
+| `CTASection` | Elevated glowing CTA card (`bg-surface-elevated rounded-3xl` + coral `.glow-surface`) | `Magnetic`, `GlowSurface`, `TextReveal` | ⚠ | — |
 
 ---
 

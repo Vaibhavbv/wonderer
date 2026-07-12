@@ -27,7 +27,7 @@ export function ClaimUsernameBanner() {
           <AtSign className="h-4.5 w-4.5" />
         </span>
         <p className="text-sm text-text-primary">
-          <Link href="/settings/profile" className="font-medium text-primary-700 underline-offset-2 hover:underline">
+          <Link href="/settings/profile" className="font-medium text-primary-400 underline-offset-2 hover:underline">
             Claim your @username
           </Link>{" "}
           — it gives your profile and trips a shareable home.

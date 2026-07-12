@@ -89,7 +89,7 @@ export default async function DestinationPage({
           )}
 
           <div className="mt-10 rounded-2xl border border-border bg-surface p-6 text-center">
-            <p className="text-xs uppercase tracking-widest text-primary-600">Demo journey</p>
+            <p className="text-xs uppercase tracking-widest text-primary-400">Demo journey</p>
             <h2 className="mt-2 font-heading text-2xl text-text-primary">
               Your {dest.name} could look like this
             </h2>

@@ -15,7 +15,12 @@ import { Button } from "@/components/ui/button";
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-background pt-32 pb-20 sm:pt-40 sm:pb-28">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* Coral spotlight bleeding from the top — cheap depth on the dark canvas. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[32rem] bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,90,77,0.12),transparent)]"
+      />
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

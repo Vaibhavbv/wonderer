@@ -6,6 +6,27 @@ Categories: **Added · Changed · Fixed · Removed · Deprecated · Security · 
 
 ---
 
+## [Unreleased] — Dark theme unification + UI primitives (2026-07-12)
+
+User-directed redesign (ADR-018): the whole app now shares one modern dark theme — warm charcoal surfaces, coral #FF5A4D accent, Playfair headings — replacing the inconsistent orange-on-white pages.
+
+### Added
+- shadcn-style primitives in `components/ui/` authored against our semantic tokens: `Dialog` (Radix), `Input`, `Textarea`, `Label` (Radix), `Badge` (cva status variants), `Separator` (Radix). Radius rule: buttons/inputs `rounded-lg` · cards `rounded-xl` · modals `rounded-2xl` · pills `rounded-full`.
+- Clerk dark appearance via `@clerk/themes` (coral primary) on `ClerkProvider`.
+- Marketing hero coral spotlight; `.nav-underline` finally wired onto navbar links; `--shadow-glow` used on primary CTAs and the pricing highlight.
+
+### Changed
+- `globals.css` semantic tokens flipped to dark values (names unchanged — token-clean components converted automatically); dark shadow set; `color-scheme: dark`; coral selection.
+- Create-trip modal → Dialog with Input/Label/Textarea; trip-grid privacy pills → Badge variants; the 3 duplicated `inputClass` strings → Input/Textarea primitives; trip-editor's local Card → `EditorSection` + Badge status chip.
+- ~40 files swept: raw `bg-white`/`bg-neutral-*`/green/yellow utilities → semantic tokens; pale tints → alpha idiom (`bg-primary-500/15 text-primary-400`); dim `text-primary-600/700` → 400/300 steps.
+- Footer is now the page floor (`bg-background` + hairline) instead of a dark band; CTA is an elevated glowing card; pricing highlight uses elevated surface + coral glow ring.
+- Deliberate exceptions kept: `/trips/[id]/wander` cinematic view, photo-overlay glass pills, cursor mix-blend dot.
+
+### Fixed
+- `viewerIsOwner` prop restored on `/trips/[id]` (dropped in #20's sidebar rewrite — the owner Edit button had disappeared).
+
+---
+
 ## [Unreleased] — Flagship travel-journal upgrade (2026-07-10)
 
 Full-stack feature pass making the product a personal travel journal: every real-but-unsurfaced backend capability (feed, story editor, AI generation, profile editing, publish/privacy, follower lists) gained UI, plus the one missing API (post-create location editing) was added. See ADR-016/017.

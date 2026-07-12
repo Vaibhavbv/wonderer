@@ -92,3 +92,7 @@ These map to roadmap phases (see [`07_ROADMAP.md`](./07_ROADMAP.md)); WV-109 dec
 - **Cleanup:** the safe removals (#21/#22/#23/#27) are **done**; a few low-priority prune candidates remain (#24/#25/#26).
 
 Overall the debt is **moderate, well-contained, and now materially reduced**: the risky correctness/security items were fixed in Phase 0; what remains is either duplication (easy, ticketed) or intentional roadmap scaffolding. See the updated Technical Debt Score in [`PHASE_0_COMPLETION_REPORT.md`](./PHASE_0_COMPLETION_REPORT.md).
+
+
+### Designated future additions
+- **Toasts:** no toast system exists (save feedback is inline). When one is needed, add `sonner` styled with the semantic tokens — don't hand-roll a fourth notification idiom.

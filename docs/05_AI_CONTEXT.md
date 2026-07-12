@@ -24,7 +24,7 @@ Auth = Clerk (stateless JWT per request). Response envelope everywhere = `{ succ
 
 ## Goals (what "good" looks like here)
 
-1. Preserve the **signature aesthetic**: light/editorial, one coral accent `#FF5A4D`, serif headlines, full-bleed photos, generous whitespace, buttery motion. (See [`06_PRODUCT_BIBLE.md`](./06_PRODUCT_BIBLE.md).)
+1. Preserve the **signature aesthetic**: modern **dark theme** (warm charcoal surfaces from the stone ramp — user-mandated, ADR-018), one coral accent `#FF5A4D`, serif headlines, full-bleed photos, generous whitespace, buttery motion. (See [`06_PRODUCT_BIBLE.md`](./06_PRODUCT_BIBLE.md); the semantic tokens in `globals.css` are the single source of surface/text colors — never raw white/neutral utilities.)
 2. Keep the **API contract stable** (the response envelope + auth model).
 3. Reduce, don't grow, **duplication and dead code**.
 4. Every change leaves the repo **more self-documenting**, not less.

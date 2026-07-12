@@ -34,7 +34,7 @@ export function UserList({ users, emptyMessage }: { users: PublicUser[]; emptyMe
                 </span>
               )}
               <span className="min-w-0">
-                <span className="block truncate font-heading text-lg text-text-primary group-hover:text-primary-600">
+                <span className="block truncate font-heading text-lg text-text-primary group-hover:text-primary-400">
                   {user.displayName || `@${user.username}`}
                 </span>
                 {user.username && (

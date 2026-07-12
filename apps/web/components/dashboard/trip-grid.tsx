@@ -131,7 +131,7 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
                   <EditShortcut tripId={trip.id} title={trip.title} />
                 </div>
                 <div className="p-5">
-                  <h3 className="font-heading text-lg font-semibold text-text-primary group-hover:text-primary-600 transition-colors">
+                  <h3 className="font-heading text-lg font-semibold text-text-primary group-hover:text-primary-400 transition-colors">
                     {trip.title}
                   </h3>
                   {trip.locations[0]?.name && (

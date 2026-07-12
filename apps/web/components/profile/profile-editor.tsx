@@ -129,7 +129,7 @@ export function ProfileEditor() {
           {me?.username ? (
             <p className="text-sm text-text-tertiary">@{me.username}</p>
           ) : (
-            <p className="text-sm text-primary-600">No username yet — claim one below</p>
+            <p className="text-sm text-primary-400">No username yet — claim one below</p>
           )}
         </div>
       </div>

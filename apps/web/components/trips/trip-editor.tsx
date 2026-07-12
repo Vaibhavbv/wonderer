@@ -323,7 +323,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
       {/* Page header */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
         <div>
-          <p className="text-sm uppercase tracking-widest text-primary-600">Edit trip</p>
+          <p className="text-sm uppercase tracking-widest text-primary-400">Edit trip</p>
           <h1 className="mt-1 font-heading text-3xl text-text-primary">{title || initialTrip.title}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -533,7 +533,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
               <div key={loc.id} className="rounded-xl border border-border p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-2 text-sm font-medium text-text-primary">
-                    <MapPin className="h-4 w-4 text-primary-600" />
+                    <MapPin className="h-4 w-4 text-primary-400" />
                     Stop {idx + 1}
                   </span>
                   <div className="flex items-center gap-1">
@@ -653,7 +653,7 @@ export function TripEditor({ trip: initialTrip }: { trip: TripRecord }) {
             <p className="flex items-center gap-1.5 text-xs text-text-tertiary">
               <Globe2 className="h-3.5 w-3.5" />
               Changed coordinates?{" "}
-              <Link href={`/trips/${initialTrip.id}/wander`} className="text-primary-600 hover:underline">
+              <Link href={`/trips/${initialTrip.id}/wander`} className="text-primary-400 hover:underline">
                 View on globe
               </Link>
             </p>

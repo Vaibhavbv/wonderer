@@ -74,7 +74,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
             <ImageIcon className="w-4 h-4" />
             {images.length} photos
           </span>
-          <a href="#comments" className="flex items-center gap-1 hover:text-primary-600 transition-colors">
+          <a href="#comments" className="flex items-center gap-1 hover:text-primary-400 transition-colors">
             <MessageCircle className="w-4 h-4" />
             {trip.commentsCount} {trip.commentsCount === 1 ? "comment" : "comments"}
           </a>
@@ -119,7 +119,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
             {trip.locations.map((loc) => (
               <div key={loc.id} className="bg-surface border border-border rounded-xl p-4">
                 <div className="flex items-center gap-2 text-text-primary font-medium">
-                  <MapPin className="w-4 h-4 text-primary-600" />
+                  <MapPin className="w-4 h-4 text-primary-400" />
                   {loc.name}
                   {loc.country && <span className="text-text-tertiary font-normal">· {loc.country}</span>}
                 </div>

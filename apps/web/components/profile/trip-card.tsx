@@ -37,7 +37,7 @@ export function TripCard({ trip }: { trip: FeedTrip }) {
         )}
       </div>
       <div className="p-4">
-        <p className="text-xs uppercase tracking-wide text-primary-600">{formatRange(trip.startDate, trip.endDate)}</p>
+        <p className="text-xs uppercase tracking-wide text-primary-400">{formatRange(trip.startDate, trip.endDate)}</p>
         <h3 className="mt-1 font-heading text-xl leading-snug text-text-primary">{trip.title}</h3>
         {placeLabel && <p className="mt-1 text-sm text-text-secondary">{placeLabel}</p>}
         <div className="mt-3 flex items-center gap-4 text-sm text-text-tertiary">

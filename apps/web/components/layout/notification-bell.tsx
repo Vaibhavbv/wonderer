@@ -60,7 +60,7 @@ export function NotificationBell({ variant = "light" }: { variant?: "light" | "d
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <span className="text-sm font-medium text-text-primary">Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-primary-600 hover:underline">
+              <button onClick={markAllRead} className="text-xs text-primary-400 hover:underline">
                 Mark all read
               </button>
             )}
