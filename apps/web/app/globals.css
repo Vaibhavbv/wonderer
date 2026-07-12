@@ -47,21 +47,24 @@
   --color-neutral-800: #292524;
   --color-neutral-900: #1C1917;
 
-  /* Semantic */
-  --color-background: #FAFAF9;
-  --color-surface: #FFFFFF;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-pressed: #F5F5F4;
-  --color-border: #E7E5E4;
-  --color-border-focus: #E85D4C;
-  --color-text-primary: #1C1917;
-  --color-text-secondary: #57534E;
+  /* Semantic — single dark theme (warm charcoal from the stone ramp).
+     Components must use these, never raw white/neutral utilities. */
+  --color-background: #0C0A09;
+  --color-surface: #1C1917;
+  --color-surface-elevated: #292524;
+  --color-surface-pressed: #211D1B;
+  --color-border: #2E2A27;
+  --color-border-focus: #FF5A4D;
+  --color-text-primary: #FAFAF9;
+  --color-text-secondary: #A8A29E;
   --color-text-tertiary: #78716C;
-  --color-text-inverse: #FFFFFF;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
+  --color-text-inverse: #1C1917;
+  --color-success: #34D399;
+  --color-warning: #FBBF24;
+  --color-error: #F87171;
+  --color-info: #60A5FA;
+  /* Focus-ring alias so ring-ring idioms work on the new primitives. */
+  --color-ring: var(--color-border-focus);
 
   /* Typography — next/font injects the real families via --font-playfair /
      --font-inter on <html> (see app/layout.tsx); the literal names are only
@@ -94,12 +97,12 @@
   --radius-3xl: 32px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 0 20px rgba(232, 93, 76, 0.3);
+  /* Shadows (tuned for dark surfaces — deeper, softer) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.55), 0 4px 8px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 24px 40px -8px rgba(0, 0, 0, 0.6), 0 10px 16px -8px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 24px rgba(255, 90, 77, 0.35);
 
   /* Motion: shared easing curves for GSAP/Framer Motion + CSS transitions */
   --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
@@ -114,8 +117,11 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Single dark theme: makes native scrollbars, form controls and date
+       pickers render dark without custom CSS. */
+    color-scheme: dark;
   }
-  
+
   body {
     font-family: var(--font-body);
     background-color: var(--color-background);
@@ -131,8 +137,8 @@
   }
 
   ::selection {
-    background-color: var(--color-primary-200);
-    color: var(--color-primary-900);
+    background-color: rgba(255, 90, 77, 0.35);
+    color: #FAFAF9;
   }
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,7 +35,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorPrimary: "#FF5A4D",
+          colorBackground: "#1C1917",
+        },
+      }}
+    >
       <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
         <body className="antialiased min-h-screen">
           {children}

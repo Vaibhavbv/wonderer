@@ -3,15 +3,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+  "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
   {
     variants: {
       variant: {
-        primary: "bg-primary-500 text-white hover:bg-primary-600 hover:-translate-y-0.5 hover:shadow-md active:bg-primary-700 active:translate-y-0",
-        secondary: "bg-secondary-700 text-white hover:bg-secondary-800 hover:-translate-y-0.5 hover:shadow-md",
-        outline: "border-2 border-primary-500 text-primary-600 hover:bg-primary-50 hover:-translate-y-0.5",
-        ghost: "text-secondary-700 hover:bg-secondary-100 hover:text-secondary-900",
-        danger: "bg-error text-white hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-md",
+        primary: "bg-primary-500 text-white hover:bg-primary-600 hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)] active:bg-primary-700 active:translate-y-0",
+        secondary: "bg-surface-elevated text-text-primary border border-border hover:bg-surface-pressed hover:-translate-y-0.5",
+        outline: "border-2 border-primary-500 text-primary-400 hover:bg-primary-500/10 hover:-translate-y-0.5",
+        ghost: "text-text-secondary hover:bg-surface-pressed hover:text-text-primary",
+        danger: "bg-error/90 text-text-inverse hover:bg-error hover:-translate-y-0.5 hover:shadow-md",
       },
       size: {
         xs: "px-2 py-1 text-xs",
