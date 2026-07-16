@@ -25,7 +25,7 @@
 | 5 | **No Clerk webhook sync** — Clerk-side profile/email/delete changes never reach the DB; guard's upsert never refreshes existing users | `webhooks/` (empty) + `clerk-auth.guard.ts` | Stale user data | WV-201 (Phase 2) |
 | 6 | **S3 objects leak on media delete** — DB row deleted, object orphaned | `media.service.ts` (~line 172 TODO) | Storage cost + quota drift | WV-107 |
 | 8 | **`@CurrentUser()` returns null if guard forgotten** — no failure, just silent `undefined` userId | `current-user.decorator.ts` | Latent auth footgun on new routes | Convention: always pair with `@UseGuards`; consider guarding globally |
-| 9 | **Denormalized counters can drift** — maintained only in app code | `Trip.*Count` fields | Wrong stats if a mutation forgets to update | Discipline + a reconciliation job later |
+| 9 | ~~**Denormalized counters can drift**~~ — counter updates now run in the same `$transaction` as their row mutations (trips/comments/media/likes) | `Trip.*Count` fields | Residual risk only if a *new* mutation forgets the pattern | ✅ Fixed (Phase 1 review pass; see `21_PRODUCT_REVIEW.md`) |
 
 ---
 

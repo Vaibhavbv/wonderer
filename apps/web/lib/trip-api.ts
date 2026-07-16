@@ -137,9 +137,11 @@ export async function deleteTrip(token: string, tripId: string): Promise<void> {
   if (!res.ok) await unwrap(res);
 }
 
-export async function getTrip(token: string, tripId: string): Promise<TripRecord> {
+// token is null for anonymous visitors: the endpoint is optional-auth, so
+// PUBLIC/UNLISTED trips (shared links) load without signing in.
+export async function getTrip(token: string | null, tripId: string): Promise<TripRecord> {
   const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     cache: "no-store",
   });
   return unwrap<TripRecord>(res);

@@ -20,6 +20,21 @@ export class AiService {
       throw new ForbiddenException('AI credits exhausted. Upgrade your plan.');
     }
 
+    // The processor reads the referenced trip/media wholesale (locations,
+    // notes, dates) and returns the generated content in the job result, so
+    // access MUST be checked here — the job id alone would otherwise let any
+    // user run generation against any private trip.
+    if (input.tripId) {
+      await this.assertTripAccess(userId, input.tripId);
+    }
+    if (input.mediaId) {
+      const media = await this.prisma.media.findUnique({ where: { id: input.mediaId } });
+      if (!media) throw new NotFoundException('Media not found');
+      if (media.userId !== userId) {
+        throw new ForbiddenException('You do not have access to this media');
+      }
+    }
+
     const job = await this.prisma.aIJob.create({
       data: {
         userId,
@@ -57,6 +72,22 @@ export class AiService {
     if (!job) throw new NotFoundException('Job not found');
     if (job.userId !== userId) throw new ForbiddenException();
     return job;
+  }
+
+  // Generation is an authoring operation: owner or collaborator only. Mere
+  // read access (a PUBLIC trip) does not let you spend credits on someone
+  // else's trip and pull its full content through the job result.
+  private async assertTripAccess(userId: string, tripId: string) {
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) throw new NotFoundException('Trip not found');
+    if (trip.userId === userId) return;
+
+    const collaborator = await this.prisma.tripCollaborator.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!collaborator) {
+      throw new ForbiddenException('You do not have access to this trip');
+    }
   }
 
   async getUserCreditUsage(userId: string) {

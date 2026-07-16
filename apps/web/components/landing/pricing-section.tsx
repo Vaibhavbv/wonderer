@@ -5,6 +5,9 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SignInButton } from "@clerk/nextjs";
 
+// Paid tiers stay `comingSoon: true` until checkout exists end-to-end
+// (payments/webhooks are not built yet) — selling an unbuyable plan breaks
+// trust faster than not selling one.
 const plans = [
   {
     name: "Free",
@@ -13,13 +16,14 @@ const plans = [
     description: "The full social app",
     features: [
       "Unlimited trips on your map",
+      "Cinematic 3D journey player",
       "Followers, feed & discovery",
-      "Travel passport & stamps",
-      "Save to bucket list",
+      "Likes & comments",
       "Public profile page",
     ],
     cta: "Start your map",
     highlighted: false,
+    comingSoon: false,
   },
   {
     name: "Pro",
@@ -33,8 +37,9 @@ const plans = [
       "Watermark-free recap exports",
       "Priority profile in discovery",
     ],
-    cta: "Go Pro",
+    cta: "Coming soon",
     highlighted: true,
+    comingSoon: true,
   },
   {
     name: "Creator",
@@ -48,8 +53,9 @@ const plans = [
       "Custom profile domain",
       "Early access to new features",
     ],
-    cta: "Become a Creator",
+    cta: "Coming soon",
     highlighted: false,
+    comingSoon: true,
   },
 ];
 
@@ -115,15 +121,21 @@ export function PricingSection() {
                 ))}
               </ul>
 
-              <SignInButton mode="modal">
-                <Button
-                  variant={plan.highlighted ? "primary" : "outline"}
-                  fullWidth
-                  className={plan.highlighted ? "bg-primary-500 hover:bg-primary-600" : ""}
-                >
+              {plan.comingSoon ? (
+                <Button variant="outline" fullWidth disabled aria-disabled="true">
                   {plan.cta}
                 </Button>
-              </SignInButton>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button
+                    variant={plan.highlighted ? "primary" : "outline"}
+                    fullWidth
+                    className={plan.highlighted ? "bg-primary-500 hover:bg-primary-600" : ""}
+                  >
+                    {plan.cta}
+                  </Button>
+                </SignInButton>
+              )}
             </motion.div>
           ))}
         </div>

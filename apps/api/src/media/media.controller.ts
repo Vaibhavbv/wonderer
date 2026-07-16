@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Delete, Body, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, ParseArrayPipe, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 import { ClerkAuthGuard } from '@common/guards/clerk-auth.guard';
@@ -23,7 +23,10 @@ export class MediaController {
   @ApiOperation({ summary: 'Get batch S3 presigned URLs' })
   async getBatchPresignedUrls(
     @CurrentUser('id') userId: string,
-    @Body() dtos: PresignedUrlDto[],
+    // The global ValidationPipe skips top-level arrays; without ParseArrayPipe
+    // the element decorators never run.
+    @Body(new ParseArrayPipe({ items: PresignedUrlDto, whitelist: true, forbidNonWhitelisted: true }))
+    dtos: PresignedUrlDto[],
   ) {
     return this.mediaService.getBatchPresignedUrls(userId, dtos);
   }

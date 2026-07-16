@@ -166,6 +166,8 @@
 ### Phase 1 — Critical fixes (make it stable & safe)
 *Goal: no broken primary flow, no authorization holes. Every item is small and pinned.*
 
+> **Status: ✅ implemented** (all 12 items below) in the follow-up change on this doc's branch — trips-list 400, both IDORs, privacy model, public trip view, dead navigation, transactional counters, pagination/batch validation, Dockerfile, Clerk guard hardening, pricing de-risk, and CORS defaults. Regression specs added for the DTO whitelist, AI access control, trip privacy, and duplicate ownership.
+
 1. **Fix `GET /v1/trips` 400** — add `per_page`/`sort`/`cursor` as `@IsOptional()` fields to `TripListQueryDto`; add a controller test pinning it. (`trips.dto.ts:226`)
 2. **Close the AI IDOR** — validate trip access in `AiService.queueJob` before enqueue, reusing `getAccessibleTrip`. (`ai.service.ts:16`)
 3. **Close the media IDOR** — require edit-rights on `dto.tripId` in `getPresignedUrl` (the `getEditableTrip` check). (`media.service.ts:28`)

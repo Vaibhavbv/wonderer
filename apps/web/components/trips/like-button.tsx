@@ -48,7 +48,9 @@ export function LikeButton({
     setCount((c) => c + (nextLiked ? 1 : -1));
     try {
       const token = await getToken();
-      if (!token) return;
+      // No token means the request never happened — throw into the revert
+      // path below so the optimistic state doesn't stick.
+      if (!token) throw new Error("Not authenticated");
       if (nextLiked) await likeTrip(token, tripId);
       else await unlikeTrip(token, tripId);
     } catch {

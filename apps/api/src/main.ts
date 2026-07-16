@@ -31,10 +31,17 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
-  // CORS
+  // CORS. Auth is a bearer header, not cookies, so `credentials` is only
+  // needed by deployments that opt into cookie flows — and it must never be
+  // combined with reflect-any-origin: that would let any website make
+  // credentialed requests against the API.
+  const wildcardCors = corsOrigins === '*';
+  if (wildcardCors && nodeEnv === 'production') {
+    console.warn('⚠️  CORS_ORIGINS is not set in production — set it to your frontend origin(s).');
+  }
   app.enableCors({
     origin: allowedOrigins,
-    credentials: true,
+    credentials: !wildcardCors,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
