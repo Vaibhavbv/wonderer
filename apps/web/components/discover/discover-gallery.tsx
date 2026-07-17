@@ -114,11 +114,17 @@ export function DiscoverGallery({ trips }: { trips: FeedTrip[] }) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.4 }}
-                  className="mt-8"
+                  className="mt-8 flex flex-wrap items-center gap-3"
                 >
                   <Link
-                    href={`/profiles/${selected.user.username}`}
+                    href={`/trips/${selected.id}`}
                     className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-primary-600 hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)]"
+                  >
+                    View this journey
+                  </Link>
+                  <Link
+                    href={`/profiles/${selected.user.username}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:border-primary-500/50 hover:text-text-primary"
                   >
                     View {selected.user.displayName ?? "traveler"}&apos;s profile
                   </Link>

@@ -12,6 +12,9 @@ import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug'],
+    // Webhook signature verification (svix) signs the exact request bytes, so
+    // the raw body must be preserved alongside the parsed JSON.
+    rawBody: true,
   });
 
   const configService = app.get(ConfigService);
@@ -31,10 +34,17 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
-  // CORS
+  // CORS. Auth is a bearer header, not cookies, so `credentials` is only
+  // needed by deployments that opt into cookie flows — and it must never be
+  // combined with reflect-any-origin: that would let any website make
+  // credentialed requests against the API.
+  const wildcardCors = corsOrigins === '*';
+  if (wildcardCors && nodeEnv === 'production') {
+    console.warn('⚠️  CORS_ORIGINS is not set in production — set it to your frontend origin(s).');
+  }
   app.enableCors({
     origin: allowedOrigins,
-    credentials: true,
+    credentials: !wildcardCors,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });

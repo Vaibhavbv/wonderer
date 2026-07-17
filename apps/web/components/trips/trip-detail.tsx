@@ -26,7 +26,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
         {cover ? (
           <img src={cover} alt={trip.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary-300 to-secondary-300" />
+          <div className="w-full h-full bg-gradient-to-br from-primary-400/60 to-primary-800/60" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
@@ -35,7 +35,7 @@ export function TripDetail({ trip, viewerIsOwner = false }: { trip: TripRecord; 
               {trip.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="px-2 py-1 rounded-full bg-white/20 text-white text-xs font-medium backdrop-blur-sm"
+                  className="px-2 py-1 rounded-full bg-primary-500/25 text-primary-100 text-xs font-medium backdrop-blur-sm"
                 >
                   {tag}
                 </span>

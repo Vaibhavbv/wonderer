@@ -34,6 +34,18 @@ export function useNotifications() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     refresh();
+
+    // Keep the unread badge honest: poll on an interval and refetch when the
+    // tab regains focus (skip polling in hidden tabs to save requests).
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, 60_000);
+    const onFocus = () => refresh();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [isLoaded, isSignedIn, refresh]);
 
   async function markRead(id: string) {

@@ -200,9 +200,19 @@ function BackgroundLayer({
 function ScrollCue() {
   const [hidden, setHidden] = useState(false);
   useEffect(() => {
-    const onScroll = () => setHidden(window.scrollY > 200);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        setHidden(window.scrollY > 200);
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
   return (
     <motion.div

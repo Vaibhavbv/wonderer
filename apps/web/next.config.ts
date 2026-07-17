@@ -22,9 +22,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@react-three/drei'],
   },
   env: {
+    // NEXT_PUBLIC_* is inlined automatically; this entry only exists to give
+    // the API URL a local-dev default.
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
   },
 };
 

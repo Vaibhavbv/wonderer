@@ -37,19 +37,24 @@ export class CommentsService {
       }
     }
 
-    const comment = await this.prisma.comment.create({
-      data: {
-        tripId,
-        userId,
-        content: dto.content,
-        parentId: dto.parentId,
-      },
-      include: { user: { select: commentUserSelect } },
-    });
+    // Comment row and the trip's denormalized counter move together.
+    const comment = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.comment.create({
+        data: {
+          tripId,
+          userId,
+          content: dto.content,
+          parentId: dto.parentId,
+        },
+        include: { user: { select: commentUserSelect } },
+      });
 
-    await this.prisma.trip.update({
-      where: { id: tripId },
-      data: { commentsCount: { increment: 1 } },
+      await tx.trip.update({
+        where: { id: tripId },
+        data: { commentsCount: { increment: 1 } },
+      });
+
+      return created;
     });
 
     if (trip.userId !== userId) {
@@ -124,17 +129,21 @@ export class CommentsService {
       throw new ForbiddenException('You do not have permission to delete this comment');
     }
 
-    const replies = await this.prisma.comment.findMany({ where: { parentId: commentId }, select: { id: true } });
-    const deletedCount = 1 + replies.length;
+    // Reply count, the deletes, and the counter decrement must agree — read
+    // and delete inside one transaction so a concurrent insert can't skew it.
+    await this.prisma.$transaction(async (tx) => {
+      const replies = await tx.comment.findMany({ where: { parentId: commentId }, select: { id: true } });
+      const deletedCount = 1 + replies.length;
 
-    if (replies.length > 0) {
-      await this.prisma.comment.deleteMany({ where: { id: { in: replies.map((r) => r.id) } } });
-    }
-    await this.prisma.comment.delete({ where: { id: commentId } });
+      if (replies.length > 0) {
+        await tx.comment.deleteMany({ where: { id: { in: replies.map((r) => r.id) } } });
+      }
+      await tx.comment.delete({ where: { id: commentId } });
 
-    await this.prisma.trip.update({
-      where: { id: comment.tripId },
-      data: { commentsCount: { decrement: deletedCount } },
+      await tx.trip.update({
+        where: { id: comment.tripId },
+        data: { commentsCount: { decrement: deletedCount } },
+      });
     });
 
     return { deleted: true };
@@ -145,18 +154,19 @@ export class CommentsService {
     if (!comment) throw new NotFoundException('Comment not found');
 
     try {
-      await this.prisma.commentLike.create({ data: { commentId, userId } });
+      await this.prisma.$transaction(async (tx) => {
+        await tx.commentLike.create({ data: { commentId, userId } });
+        await tx.comment.update({
+          where: { id: commentId },
+          data: { likesCount: { increment: 1 } },
+        });
+      });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         throw new ConflictException('Already liked this comment');
       }
       throw e;
     }
-
-    await this.prisma.comment.update({
-      where: { id: commentId },
-      data: { likesCount: { increment: 1 } },
-    });
 
     if (comment.userId !== userId) {
       await this.notifications.create({
@@ -172,13 +182,15 @@ export class CommentsService {
   }
 
   async unlike(userId: string, commentId: string) {
-    const result = await this.prisma.commentLike.deleteMany({ where: { commentId, userId } });
-    if (result.count > 0) {
-      await this.prisma.comment.update({
-        where: { id: commentId },
-        data: { likesCount: { decrement: 1 } },
-      });
-    }
+    await this.prisma.$transaction(async (tx) => {
+      const result = await tx.commentLike.deleteMany({ where: { commentId, userId } });
+      if (result.count > 0) {
+        await tx.comment.update({
+          where: { id: commentId },
+          data: { likesCount: { decrement: 1 } },
+        });
+      }
+    });
     return { liked: false };
   }
 }

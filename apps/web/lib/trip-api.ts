@@ -137,9 +137,11 @@ export async function deleteTrip(token: string, tripId: string): Promise<void> {
   if (!res.ok) await unwrap(res);
 }
 
-export async function getTrip(token: string, tripId: string): Promise<TripRecord> {
+// token is null for anonymous visitors: the endpoint is optional-auth, so
+// PUBLIC/UNLISTED trips (shared links) load without signing in.
+export async function getTrip(token: string | null, tripId: string): Promise<TripRecord> {
   const res = await fetch(`${API_URL}/v1/trips/${encodeURIComponent(tripId)}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     cache: "no-store",
   });
   return unwrap<TripRecord>(res);
@@ -170,6 +172,16 @@ export async function getPresignedUrl(
     body: JSON.stringify(input),
   });
   return unwrap<PresignedUrlResponse>(res);
+}
+
+// Tells the API the S3 PUT succeeded — this is what makes the upload count
+// on the trip and against the user's storage quota.
+export async function confirmUpload(token: string, mediaId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/v1/media/${encodeURIComponent(mediaId)}/confirm`, {
+    method: "POST",
+    headers: authHeaders(token, false),
+  });
+  await unwrap(res);
 }
 
 export async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {

@@ -22,10 +22,10 @@
 
 | # | Problem | Where | Impact | Fix |
 |---|---|---|---|---|
-| 5 | **No Clerk webhook sync** — Clerk-side profile/email/delete changes never reach the DB; guard's upsert never refreshes existing users | `webhooks/` (empty) + `clerk-auth.guard.ts` | Stale user data | WV-201 (Phase 2) |
-| 6 | **S3 objects leak on media delete** — DB row deleted, object orphaned | `media.service.ts` (~line 172 TODO) | Storage cost + quota drift | WV-107 |
+| 5 | ~~**No Clerk webhook sync**~~ — `POST /v1/webhooks/clerk` (svix-verified) now mirrors `user.created/updated/deleted` | `webhooks/webhooks.controller.ts` | — | ✅ Fixed (WV-201; see `21_PRODUCT_REVIEW.md` Phase 2) |
+| 6 | **S3 objects leak** — *media delete now cleans its object (best-effort)*; trip/account **cascade** deletes still orphan objects | `media.service.ts` (fixed) · `trips/users` cascade (open) | Storage cost on bulk deletes | WV-107 (remaining: cascade cleanup job) |
 | 8 | **`@CurrentUser()` returns null if guard forgotten** — no failure, just silent `undefined` userId | `current-user.decorator.ts` | Latent auth footgun on new routes | Convention: always pair with `@UseGuards`; consider guarding globally |
-| 9 | **Denormalized counters can drift** — maintained only in app code | `Trip.*Count` fields | Wrong stats if a mutation forgets to update | Discipline + a reconciliation job later |
+| 9 | ~~**Denormalized counters can drift**~~ — counter updates now run in the same `$transaction` as their row mutations (trips/comments/media/likes) | `Trip.*Count` fields | Residual risk only if a *new* mutation forgets the pattern | ✅ Fixed (Phase 1 review pass; see `21_PRODUCT_REVIEW.md`) |
 
 ---
 
@@ -39,8 +39,8 @@
 | 13 | **Cover/media-URL resolution duplicated** | `trip-detail.tsx`, `trip-grid.tsx`, `trip-to-journey.ts` | Extract a `resolveMediaUrl` util |
 | 14 | **`toVector3` duplicated** (lat/lng→sphere) | `three/globe.tsx`, `three/journey-scene.tsx` | Extract to a shared three util |
 | 15 | **Date formatting overlap** | `lib/utils.ts` vs `trip-card.tsx` local `formatRange` | Consolidate into `utils` |
-| 16 | **`postprocessing` is a transitive import** (not a direct dep) | `three/journey-scene.tsx` | WV-111 |
-| 17 | **Redis config duplicated / `RedisModule` dead** — BullMQ configures Redis directly in `app.module`; `REDIS_CLIENT` has no consumers; `trips.module` imports `RedisModule` pointlessly | `app.module.ts`, `redis/`, `trips.module.ts` | Unify Redis config; remove dead module/import |
+| 16 | ~~**`postprocessing` is a transitive import**~~ — now a direct dependency | `apps/web/package.json` | ✅ Fixed (WV-111) |
+| 17 | ~~**Redis config duplicated / `RedisModule` dead**~~ — dead module deleted; `ioredis` now genuinely used by `RedisThrottlerStorage` (rate limits shared across instances when `REDIS_HOST` is set) | `common/throttler/redis-throttler.storage.ts` | ✅ Fixed |
 | 18 | **Configured-but-inert Nest modules** — `EventEmitter`, `Schedule` registered, no consumers. *(`Throttler` is now enforced — WV-901 ✅ resolved in Phase 0.)* | `app.module.ts` | Use or remove `EventEmitter`/`Schedule` |
 | 19 | **`Comment.parentId` is a plain string, not a FK** — integrity only in app code | `schema.prisma` | Convert to self-relation (future migration) |
 | 20 | **Empty `AppService`** | `app.service.ts` | Remove or use |
@@ -52,7 +52,7 @@
 **✅ RESOLVED in Phase 0 cleanup:**
 - **#21 Dead `MapViewer` component** — removed (`components/map/` folder deleted), freeing `mapbox-gl`/`@types/mapbox-gl`.
 - **#22 Legacy `wander-demo.html`** — removed; `QUICKSTART.md` given a deprecation banner.
-- **#23 Unused deps** — 15 removed (FE: `gsap`, `zustand`, `@mapbox/mapbox-gl-draw`, `mapbox-gl`; BE: `@nestjs/jwt`, `passport*`, `@nestjs/mapped-types`, `joi`, `zod`, `ms`, `@nestjs/axios`, `mapbox-gl`). Kept as planned scaffolding: `@stripe/*`, `stripe`, `svix`, `sharp`, websocket pkgs (see [`13_DEPENDENCY_GUIDE.md`](./13_DEPENDENCY_GUIDE.md)).
+- **#23 Unused deps** — 15 removed (FE: `gsap`, `zustand`, `@mapbox/mapbox-gl-draw`, `mapbox-gl`; BE: `@nestjs/jwt`, `passport*`, `@nestjs/mapped-types`, `joi`, `zod`, `ms`, `@nestjs/axios`, `mapbox-gl`). The Phase 2/3 review pass then removed the remaining dead scaffolding (`@stripe/*`, `stripe`, `sharp`, websocket pkgs, `lenis`) — `svix` stayed and is now used by the Clerk webhook controller.
 - **#27 `@types/three`** — moved to `devDependencies`.
 
 **⚠️ Still open:**
@@ -95,4 +95,4 @@ Overall the debt is **moderate, well-contained, and now materially reduced**: th
 
 
 ### Designated future additions
-- **Toasts:** no toast system exists (save feedback is inline). When one is needed, add `sonner` styled with the semantic tokens — don't hand-roll a fourth notification idiom.
+- **Toasts:** a single token-styled `ToastProvider` now lives in `components/ui/toaster.tsx` (mounted in the root layout, reduced-motion aware). Use `useToast()` for all transient feedback — don't add a second notification idiom.

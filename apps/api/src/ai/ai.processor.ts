@@ -68,21 +68,41 @@ export class AiProcessor extends WorkerHost {
         data: {
           status: 'COMPLETED',
           result,
+          tokensUsed: typeof result?.tokensUsed === 'number' ? result.tokensUsed : null,
           completedAt: new Date(),
         },
       });
 
       return result;
     } catch (error) {
-      this.logger.error(`AI job ${jobId} failed: ${error.message}`);
-      await this.prisma.aIJob.update({
-        where: { id: jobId },
-        data: {
-          status: 'FAILED',
-          error: error.message,
-          completedAt: new Date(),
-        },
-      });
+      // BullMQ retries this job (attempts is set on the queue), so FAILED is
+      // only truthful once the last attempt is spent. Intermediate failures
+      // go back to QUEUED with the error recorded; the terminal one refunds
+      // the credit charged at enqueue.
+      const maxAttempts = job.opts.attempts ?? 1;
+      const attemptsSpent = job.attemptsMade + 1;
+      const isFinalAttempt = attemptsSpent >= maxAttempts;
+      this.logger.error(
+        `AI job ${jobId} failed (attempt ${attemptsSpent}/${maxAttempts}): ${error.message}`,
+      );
+
+      if (isFinalAttempt) {
+        await this.prisma.$transaction([
+          this.prisma.aIJob.update({
+            where: { id: jobId },
+            data: { status: 'FAILED', error: error.message, completedAt: new Date() },
+          }),
+          this.prisma.user.update({
+            where: { id: job.data.userId },
+            data: { aiCreditsUsed: { decrement: 1 } },
+          }),
+        ]);
+      } else {
+        await this.prisma.aIJob.update({
+          where: { id: jobId },
+          data: { status: 'QUEUED', error: error.message },
+        });
+      }
       throw error;
     }
   }

@@ -21,6 +21,10 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  CLERK_AUTHORIZED_PARTIES?: string;
+
+  @IsString()
+  @IsOptional()
   REDIS_HOST?: string;
 
   @IsNumber()
@@ -68,10 +72,6 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   OPENAI_API_KEY?: string;
-
-  @IsString()
-  @IsOptional()
-  ANTHROPIC_API_KEY?: string;
 
   @IsString()
   @IsOptional()

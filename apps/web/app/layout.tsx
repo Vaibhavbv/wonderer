@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { ToastProvider } from "@/components/ui/toaster";
 import "./globals.css";
 
 const inter = Inter({
@@ -46,7 +47,7 @@ export default function RootLayout({
     >
       <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
         <body className="antialiased min-h-screen">
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </body>
       </html>
     </ClerkProvider>

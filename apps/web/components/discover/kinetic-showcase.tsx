@@ -63,7 +63,7 @@ export function KineticShowcase({ trips }: { trips: FeedTrip[] }) {
                     draggable={false}
                   />
                 ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-primary-200 to-secondary-200" />
+                  <div className="h-full w-full bg-gradient-to-br from-primary-300/70 to-primary-700/70" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4 text-white">

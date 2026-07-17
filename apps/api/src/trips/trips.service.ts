@@ -77,44 +77,53 @@ export class TripsService {
     const existingSlug = await this.prisma.trip.findUnique({ where: { slug } });
     const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
 
-    const trip = await this.prisma.trip.create({
-      data: {
-        userId,
-        title: dto.title,
-        slug: finalSlug,
-        description: dto.description,
-        startDate: dto.startDate ? new Date(dto.startDate) : null,
-        endDate: dto.endDate ? new Date(dto.endDate) : null,
-        privacy: (dto.privacy as TripPrivacy) || 'PRIVATE',
-        tags: dto.tags || [],
-        theme: dto.theme || {},
-        locations: {
-          create: dto.locations?.map((loc, idx) => ({
-            name: loc.name,
-            latitude: loc.latitude ?? 0,
-            longitude: loc.longitude ?? 0,
-            country: loc.country,
-            city: loc.city,
-            order: idx,
-            notes: loc.notes,
-            theme: inferTheme(loc.name, loc.country, dto.tags) as unknown as Prisma.InputJsonValue,
-          })) || [],
+    // The trip row and the denormalized tripCount move together or not at all.
+    return this.prisma.$transaction(async (tx) => {
+      const trip = await tx.trip.create({
+        data: {
+          userId,
+          title: dto.title,
+          slug: finalSlug,
+          description: dto.description,
+          startDate: dto.startDate ? new Date(dto.startDate) : null,
+          endDate: dto.endDate ? new Date(dto.endDate) : null,
+          privacy: (dto.privacy as TripPrivacy) || 'PRIVATE',
+          tags: dto.tags || [],
+          theme: dto.theme || {},
+          locations: {
+            create: dto.locations?.map((loc, idx) => ({
+              name: loc.name,
+              latitude: loc.latitude ?? 0,
+              longitude: loc.longitude ?? 0,
+              country: loc.country,
+              city: loc.city,
+              order: idx,
+              notes: loc.notes,
+              theme: inferTheme(loc.name, loc.country, dto.tags) as unknown as Prisma.InputJsonValue,
+            })) || [],
+          },
         },
-      },
-      include: {
-        locations: { orderBy: { order: 'asc' } },
-      },
-    });
+        include: {
+          locations: { orderBy: { order: 'asc' } },
+          coverPhoto: { select: { id: true, variants: true, originalUrl: true } },
+          media: { orderBy: { order: 'asc' } },
+        },
+      });
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { tripCount: { increment: 1 } },
-    });
+      await tx.user.update({
+        where: { id: userId },
+        data: { tripCount: { increment: 1 } },
+      });
 
-    return trip;
+      // Matches the frontend TripRecord shape (getTrip includes isLiked).
+      return { ...trip, isLiked: false };
+    });
   }
 
-  async getTrip(userId: string, tripId: string) {
+  // userId is null for anonymous visitors (optional-auth route): they can
+  // read PUBLIC and UNLISTED trips — that's what makes shared links work —
+  // but never PRIVATE ones.
+  async getTrip(userId: string | null, tripId: string) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
       include: {
@@ -126,13 +135,22 @@ export class TripsService {
     });
 
     if (!trip) throw new NotFoundException('Trip not found');
-    if (trip.userId !== userId && trip.privacy === 'PRIVATE') {
-      throw new ForbiddenException('You do not have access to this trip');
+    if (trip.privacy === 'PRIVATE' && trip.userId !== userId) {
+      const collaborator = userId
+        ? await this.prisma.tripCollaborator.findUnique({
+            where: { tripId_userId: { tripId, userId } },
+          })
+        : null;
+      if (!collaborator) {
+        throw new ForbiddenException('You do not have access to this trip');
+      }
     }
 
-    const isLiked = await this.prisma.like.findUnique({
-      where: { tripId_userId: { tripId, userId } },
-    }).then(Boolean);
+    const isLiked = userId
+      ? await this.prisma.like.findUnique({
+          where: { tripId_userId: { tripId, userId } },
+        }).then(Boolean)
+      : false;
 
     return { ...trip, isLiked };
   }
@@ -156,10 +174,15 @@ export class TripsService {
       include: {
         locations: { orderBy: { order: 'asc' } },
         coverPhoto: true,
+        media: { orderBy: { order: 'asc' } },
       },
     });
 
-    return updated;
+    const isLiked = Boolean(
+      await this.prisma.like.findUnique({ where: { tripId_userId: { tripId, userId } } }),
+    );
+
+    return { ...updated, isLiked };
   }
 
   async deleteTrip(userId: string, tripId: string) {
@@ -167,58 +190,65 @@ export class TripsService {
     if (!trip) throw new NotFoundException('Trip not found');
     if (trip.userId !== userId) throw new ForbiddenException('Only the owner can delete a trip');
 
-    await this.prisma.trip.delete({ where: { id: tripId } });
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { tripCount: { decrement: 1 } },
-    });
+    await this.prisma.$transaction([
+      this.prisma.trip.delete({ where: { id: tripId } }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { tripCount: { decrement: 1 } },
+      }),
+    ]);
 
     return { deleted: true };
   }
 
   async duplicateTrip(userId: string, tripId: string) {
-    await this.getAccessibleTrip(tripId, userId);
-
+    // Duplicating copies someone's whole itinerary into the caller's account,
+    // so read access is not enough — restrict to the owner.
     const original = await this.prisma.trip.findUnique({
       where: { id: tripId },
       include: { locations: true, media: true },
     });
     if (!original) throw new NotFoundException('Trip not found');
+    if (original.userId !== userId) {
+      throw new ForbiddenException('Only the owner can duplicate a trip');
+    }
 
     const newSlug = `${original.slug}-copy-${Date.now()}`;
-    const duplicated = await this.prisma.trip.create({
-      data: {
-        userId,
-        title: `${original.title} (Copy)`,
-        slug: newSlug,
-        description: original.description,
-        startDate: original.startDate,
-        endDate: original.endDate,
-        privacy: 'PRIVATE',
-        tags: original.tags,
-        theme: original.theme ?? Prisma.JsonNull,
-        locations: {
-          create: original.locations.map((loc) => ({
-            name: loc.name,
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            country: loc.country,
-            city: loc.city,
-            order: loc.order,
-            notes: loc.notes,
-            theme: loc.theme ?? Prisma.JsonNull,
-          })),
+    return this.prisma.$transaction(async (tx) => {
+      const duplicated = await tx.trip.create({
+        data: {
+          userId,
+          title: `${original.title} (Copy)`,
+          slug: newSlug,
+          description: original.description,
+          startDate: original.startDate,
+          endDate: original.endDate,
+          privacy: 'PRIVATE',
+          tags: original.tags,
+          theme: original.theme ?? Prisma.JsonNull,
+          locations: {
+            create: original.locations.map((loc) => ({
+              name: loc.name,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              country: loc.country,
+              city: loc.city,
+              order: loc.order,
+              notes: loc.notes,
+              theme: loc.theme ?? Prisma.JsonNull,
+            })),
+          },
         },
-      },
-      include: { locations: true },
-    });
+        include: { locations: true },
+      });
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { tripCount: { increment: 1 } },
-    });
+      await tx.user.update({
+        where: { id: userId },
+        data: { tripCount: { increment: 1 } },
+      });
 
-    return duplicated;
+      return duplicated;
+    });
   }
 
   async getTripStats(userId: string, tripId: string) {
@@ -246,7 +276,14 @@ export class TripsService {
     const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
     if (!trip) throw new NotFoundException('Trip not found');
     if (trip.userId !== userId && trip.privacy === 'PRIVATE') {
-      throw new ForbiddenException('You do not have access to this trip');
+      // Collaborators can read a PRIVATE trip: anyone allowed to edit it
+      // (getEditableTrip) must at minimum be allowed to see it.
+      const collaborator = await this.prisma.tripCollaborator.findUnique({
+        where: { tripId_userId: { tripId, userId } },
+      });
+      if (!collaborator) {
+        throw new ForbiddenException('You do not have access to this trip');
+      }
     }
     return trip;
   }
@@ -387,18 +424,20 @@ export class TripsService {
     const trip = await this.getAccessibleTrip(tripId, userId);
 
     try {
-      await this.prisma.like.create({ data: { tripId, userId } });
+      // Like row and counter move atomically; a P2002 rolls back the counter.
+      await this.prisma.$transaction(async (tx) => {
+        await tx.like.create({ data: { tripId, userId } });
+        await tx.trip.update({
+          where: { id: tripId },
+          data: { likesCount: { increment: 1 } },
+        });
+      });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
         throw new ConflictException('Trip already liked');
       }
       throw e;
     }
-
-    await this.prisma.trip.update({
-      where: { id: tripId },
-      data: { likesCount: { increment: 1 } },
-    });
 
     if (trip.userId !== userId) {
       const liker = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -415,13 +454,15 @@ export class TripsService {
   }
 
   async unlikeTrip(userId: string, tripId: string) {
-    const result = await this.prisma.like.deleteMany({ where: { tripId, userId } });
-    if (result.count > 0) {
-      await this.prisma.trip.update({
-        where: { id: tripId },
-        data: { likesCount: { decrement: 1 } },
-      });
-    }
+    await this.prisma.$transaction(async (tx) => {
+      const result = await tx.like.deleteMany({ where: { tripId, userId } });
+      if (result.count > 0) {
+        await tx.trip.update({
+          where: { id: tripId },
+          data: { likesCount: { decrement: 1 } },
+        });
+      }
+    });
     return { liked: false };
   }
 }

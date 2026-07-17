@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "@clerk/nextjs";
 import { Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toaster";
 import { updateTrip } from "@/lib/trip-api";
 
 interface ShareButtonProps {
@@ -19,6 +20,7 @@ export function ShareButton({ tripId, privacy, viewerIsOwner }: ShareButtonProps
   const [busy, setBusy] = useState(false);
   const [currentPrivacy, setCurrentPrivacy] = useState(privacy);
   const { getToken } = useAuth();
+  const { toast } = useToast();
   const prefersReduced = useReducedMotion();
 
   async function copyLink() {
@@ -27,7 +29,7 @@ export function ShareButton({ tripId, privacy, viewerIsOwner }: ShareButtonProps
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard unavailable — nothing to do */
+      toast("Couldn't copy the link — copy it from the address bar instead.", "error");
     }
   }
 
@@ -50,7 +52,8 @@ export function ShareButton({ tripId, privacy, viewerIsOwner }: ShareButtonProps
       setShowPrivateHint(false);
       await copyLink();
     } catch {
-      /* leave the hint open so the user can retry */
+      // Leave the hint open so the user can retry.
+      toast("Couldn't change the trip's privacy — try again.", "error");
     } finally {
       setBusy(false);
     }

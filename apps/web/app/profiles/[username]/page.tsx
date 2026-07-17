@@ -104,7 +104,9 @@ export default async function ProfilePage({
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {trips.map((trip) => (
-                <TripCard key={trip.id} trip={trip} />
+                <Link key={trip.id} href={`/trips/${trip.id}`}>
+                  <TripCard trip={trip} />
+                </Link>
               ))}
             </div>
           )}

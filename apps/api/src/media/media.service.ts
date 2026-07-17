@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { PresignedUrlDto, UpdateMediaDto } from './media.dto';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,6 +29,10 @@ export class MediaService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
+    // dto.tripId is client-supplied: without this check any user could attach
+    // media rows to any other user's trip (and inflate its media counters).
+    await this.assertCanUploadToTrip(userId, dto.tripId);
+
     const estimatedNewSize = user.storageUsedBytes + BigInt(dto.fileSize || 0);
     if (estimatedNewSize > user.storageQuotaBytes) {
       throw new ForbiddenException('Storage quota exceeded. Upgrade your plan.');
@@ -54,7 +58,9 @@ export class MediaService {
         ? 'AUDIO'
         : 'IMAGE';
 
-    // Create media record
+    // Counters and storage are NOT touched here — the client hasn't uploaded
+    // anything yet. They move on POST /media/:id/confirm, after the S3 PUT
+    // succeeds, so abandoned uploads never inflate them.
     await this.prisma.media.create({
       data: {
         id: mediaId,
@@ -69,14 +75,6 @@ export class MediaService {
       },
     });
 
-    // Keep the trip's denormalized media counters in sync.
-    if (mediaType === 'IMAGE' || mediaType === 'VIDEO') {
-      await this.prisma.trip.update({
-        where: { id: dto.tripId },
-        data: mediaType === 'VIDEO' ? { videosCount: { increment: 1 } } : { photosCount: { increment: 1 } },
-      });
-    }
-
     return {
       mediaId,
       uploadUrl,
@@ -90,6 +88,37 @@ export class MediaService {
     if (dtos.length > 50) throw new BadRequestException('Maximum 50 files per batch');
     const results = await Promise.all(dtos.map((dto) => this.getPresignedUrl(userId, dto)));
     return { data: results, count: results.length };
+  }
+
+  // Called by the client after its S3 PUT succeeds. This is the moment the
+  // upload becomes real: flip processingStatus, count it on the trip, and
+  // charge the user's storage. Idempotent — a retried confirm is a no-op.
+  async confirmUpload(userId: string, mediaId: string) {
+    const media = await this.prisma.media.findUnique({ where: { id: mediaId } });
+    if (!media) throw new NotFoundException('Media not found');
+    if (media.userId !== userId) throw new ForbiddenException();
+    if (media.processingStatus === 'completed') return media;
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.media.update({
+        where: { id: mediaId },
+        data: { processingStatus: 'completed' },
+      });
+
+      if (media.type === 'IMAGE' || media.type === 'VIDEO') {
+        await tx.trip.update({
+          where: { id: media.tripId },
+          data: media.type === 'VIDEO' ? { videosCount: { increment: 1 } } : { photosCount: { increment: 1 } },
+        });
+      }
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { storageUsedBytes: { increment: media.fileSize ?? BigInt(0) } },
+      });
+
+      return updated;
+    });
   }
 
   async listMedia(
@@ -161,15 +190,30 @@ export class MediaService {
     if (!media) throw new NotFoundException('Media not found');
     if (media.userId !== userId) throw new ForbiddenException();
 
-    await this.prisma.media.delete({ where: { id: mediaId } });
+    // Counters/storage were only charged at confirm time, so only confirmed
+    // media gives them back.
+    const wasConfirmed = media.processingStatus === 'completed';
+    await this.prisma.$transaction(async (tx) => {
+      await tx.media.delete({ where: { id: mediaId } });
 
-    if (media.type === 'IMAGE' || media.type === 'VIDEO') {
-      await this.prisma.trip.update({
-        where: { id: media.tripId },
-        data: media.type === 'VIDEO' ? { videosCount: { decrement: 1 } } : { photosCount: { decrement: 1 } },
-      });
-    }
-    // TODO: Trigger S3 deletion async
+      if (wasConfirmed && (media.type === 'IMAGE' || media.type === 'VIDEO')) {
+        await tx.trip.update({
+          where: { id: media.tripId },
+          data: media.type === 'VIDEO' ? { videosCount: { decrement: 1 } } : { photosCount: { decrement: 1 } },
+        });
+      }
+      if (wasConfirmed) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { storageUsedBytes: { decrement: media.fileSize ?? BigInt(0) } },
+        });
+      }
+    });
+
+    // Best-effort S3 cleanup — the DB row is already gone, so a failed
+    // object delete only costs storage, never correctness. Fire and forget.
+    this.deleteS3Object(media.originalUrl);
+
     return { deleted: true };
   }
 
@@ -180,5 +224,39 @@ export class MediaService {
 
     // TODO: Queue AI enhancement job
     return { queued: true, mediaId };
+  }
+
+  private deleteS3Object(publicUrl: string): void {
+    let key: string | null = null;
+    try {
+      key = new URL(publicUrl).pathname.replace(/^\//, '') || null;
+    } catch {
+      key = null;
+    }
+    if (!key) return;
+
+    this.s3Client
+      .send(
+        new DeleteObjectCommand({
+          Bucket: this.configService.get('S3_BUCKET_NAME', 'wanderverse-media'),
+          Key: key,
+        }),
+      )
+      .catch((err) => this.logger.warn(`S3 delete failed for ${key}: ${err.message}`));
+  }
+
+  // Upload rights mirror trips.service#getEditableTrip: owner or non-VIEWER
+  // collaborator.
+  private async assertCanUploadToTrip(userId: string, tripId: string) {
+    const trip = await this.prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip) throw new NotFoundException('Trip not found');
+    if (trip.userId === userId) return;
+
+    const collaborator = await this.prisma.tripCollaborator.findUnique({
+      where: { tripId_userId: { tripId, userId } },
+    });
+    if (!collaborator || collaborator.role === 'VIEWER') {
+      throw new ForbiddenException('You do not have permission to upload to this trip');
+    }
   }
 }

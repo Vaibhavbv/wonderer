@@ -58,8 +58,13 @@ describe('TripsService', () => {
       media: {
         aggregate: jest.fn(),
       },
-      $transaction: jest.fn().mockResolvedValue([]),
+      $transaction: jest.fn(),
     };
+    // Pass-through: interactive transactions run their callback against the
+    // same mock client; array form just awaits the already-invoked promises.
+    prisma.$transaction.mockImplementation(async (arg: unknown) =>
+      typeof arg === 'function' ? arg(prisma) : Promise.all(arg as Promise<unknown>[]),
+    );
     notifications = { create: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -149,6 +154,74 @@ describe('TripsService', () => {
       const result = await service.getTrip('user-1', 'trip-1');
 
       expect(result.isLiked).toBe(false);
+    });
+
+    it('allows an anonymous visitor (null userId) to read a PUBLIC trip without a like lookup', async () => {
+      prisma.trip.findUnique.mockResolvedValue({ id: 'trip-1', userId: 'owner', privacy: 'PUBLIC' });
+
+      const result = await service.getTrip(null, 'trip-1');
+
+      expect(result.isLiked).toBe(false);
+      expect(prisma.like.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('allows an anonymous visitor to read an UNLISTED trip (shared link)', async () => {
+      prisma.trip.findUnique.mockResolvedValue({ id: 'trip-1', userId: 'owner', privacy: 'UNLISTED' });
+
+      await expect(service.getTrip(null, 'trip-1')).resolves.toBeDefined();
+    });
+
+    it('forbids an anonymous visitor from reading a PRIVATE trip', async () => {
+      prisma.trip.findUnique.mockResolvedValue({ id: 'trip-1', userId: 'owner', privacy: 'PRIVATE' });
+
+      await expect(service.getTrip(null, 'trip-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows a collaborator to read a PRIVATE trip', async () => {
+      prisma.trip.findUnique.mockResolvedValue({ id: 'trip-1', userId: 'owner', privacy: 'PRIVATE' });
+      prisma.tripCollaborator.findUnique.mockResolvedValue({ role: 'VIEWER' });
+      prisma.like.findUnique.mockResolvedValue(null);
+
+      await expect(service.getTrip('user-1', 'trip-1')).resolves.toBeDefined();
+    });
+  });
+
+  describe('duplicateTrip', () => {
+    it('forbids duplicating a trip you do not own, even a PUBLIC one', async () => {
+      prisma.trip.findUnique.mockResolvedValue({
+        id: 'trip-1',
+        userId: 'other-user',
+        privacy: 'PUBLIC',
+        locations: [],
+        media: [],
+      });
+
+      await expect(service.duplicateTrip('user-1', 'trip-1')).rejects.toThrow(ForbiddenException);
+      expect(prisma.trip.create).not.toHaveBeenCalled();
+    });
+
+    it('duplicates an owned trip as PRIVATE and increments tripCount', async () => {
+      prisma.trip.findUnique.mockResolvedValue({
+        id: 'trip-1',
+        userId: 'user-1',
+        privacy: 'PUBLIC',
+        title: 'Japan',
+        slug: 'japan',
+        tags: [],
+        theme: null,
+        locations: [],
+        media: [],
+      });
+      prisma.trip.create.mockResolvedValue({ id: 'trip-2' });
+      prisma.user.update.mockResolvedValue({});
+
+      await service.duplicateTrip('user-1', 'trip-1');
+
+      expect(prisma.trip.create.mock.calls[0][0].data.privacy).toBe('PRIVATE');
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { tripCount: { increment: 1 } },
+      });
     });
   });
 

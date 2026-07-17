@@ -25,7 +25,6 @@
       "@common/*": ["src/common/*"],
       "@config/*": ["src/config/*"],
       "@prisma/*": ["src/prisma/*"],
-      "@redis/*": ["src/redis/*"]
     }
   },
   "include": ["src/**/*"],

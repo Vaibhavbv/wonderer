@@ -7,7 +7,6 @@ import { UserButton } from "@clerk/nextjs";
 import {
   Compass,
   LayoutDashboard,
-  Map,
   Menu,
   Plane,
   Plus,
@@ -18,7 +17,6 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { label: "My trips", href: "/dashboard", icon: LayoutDashboard },
   { label: "Discover", href: "/discover", icon: Compass },
-  { label: "Journey", href: "/journey", icon: Map },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {

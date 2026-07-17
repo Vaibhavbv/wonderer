@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsDateString, IsObject, IsNumber, ValidateNested, ArrayMinSize, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsEnum, IsDateString, IsNumberString, IsObject, IsNumber, ValidateNested, ArrayMinSize, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -238,4 +238,23 @@ export class TripListQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  // Pagination params are consumed by the @Pagination() decorator, but they
+  // must be declared here anyway: the global ValidationPipe runs with
+  // forbidNonWhitelisted, so any query key missing from this DTO 400s the
+  // whole request.
+  @ApiPropertyOptional({ description: 'Items per page (1-100)' })
+  @IsOptional()
+  @IsNumberString()
+  per_page?: string;
+
+  @ApiPropertyOptional({ description: 'Sort key, e.g. created_at:desc' })
+  @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @ApiPropertyOptional({ description: 'Cursor (id of the last item of the previous page)' })
+  @IsOptional()
+  @IsString()
+  cursor?: string;
 }

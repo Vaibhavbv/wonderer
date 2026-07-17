@@ -22,6 +22,7 @@ describe('CommentsService', () => {
     trip: Record<string, jest.Mock>;
     comment: Record<string, jest.Mock>;
     commentLike: Record<string, jest.Mock>;
+    $transaction: jest.Mock;
   };
   let notifications: { create: jest.Mock };
 
@@ -37,7 +38,13 @@ describe('CommentsService', () => {
         update: jest.fn(),
       },
       commentLike: { create: jest.fn(), deleteMany: jest.fn(), findMany: jest.fn() },
+      $transaction: jest.fn(),
     };
+    // Pass-through: interactive transactions run their callback against the
+    // same mock client; array form just awaits the already-invoked promises.
+    prisma.$transaction.mockImplementation(async (arg: unknown) =>
+      typeof arg === 'function' ? arg(prisma) : Promise.all(arg as Promise<unknown>[]),
+    );
     notifications = { create: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
