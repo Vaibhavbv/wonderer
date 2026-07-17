@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "@clerk/nextjs";
 import { Sparkles, X } from "lucide-react";
@@ -53,6 +53,49 @@ function friendlyError(err: unknown): string {
 export function AiAssistPanel({ trip, open, onClose, onInsertStory, onApplyTitle }: AiAssistPanelProps) {
   const { getToken } = useAuth();
   const prefersReduced = useReducedMotion();
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Dialog semantics the custom slide-over otherwise lacks: Escape closes,
+  // initial focus lands inside, Tab cycles within the panel, and focus
+  // returns to the opener when it closes.
+  useEffect(() => {
+    if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    const focusables = () =>
+      Array.from(
+        panel?.querySelectorAll<HTMLElement>(
+          'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((el) => !el.hasAttribute("disabled"));
+
+    focusables()[0]?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      opener?.focus();
+    };
+  }, [open, onClose]);
 
   const [tone, setTone] = useState<StoryTone>("descriptive");
   const [length, setLength] = useState<StoryLength>("medium");
@@ -120,12 +163,14 @@ export function AiAssistPanel({ trip, open, onClose, onInsertStory, onApplyTitle
             className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
           />
           <motion.aside
+            ref={panelRef}
             initial={prefersReduced ? { opacity: 0 } : { x: "100%" }}
             animate={prefersReduced ? { opacity: 1 } : { x: 0 }}
             exit={prefersReduced ? { opacity: 0 } : { x: "100%" }}
             transition={{ type: "tween", duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-surface shadow-xl"
             role="dialog"
+            aria-modal="true"
             aria-label="AI writing assistant"
           >
             <header className="flex items-center justify-between border-b border-border px-6 py-4">

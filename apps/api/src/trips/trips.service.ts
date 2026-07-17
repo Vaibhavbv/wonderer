@@ -105,6 +105,8 @@ export class TripsService {
         },
         include: {
           locations: { orderBy: { order: 'asc' } },
+          coverPhoto: { select: { id: true, variants: true, originalUrl: true } },
+          media: { orderBy: { order: 'asc' } },
         },
       });
 
@@ -113,7 +115,8 @@ export class TripsService {
         data: { tripCount: { increment: 1 } },
       });
 
-      return trip;
+      // Matches the frontend TripRecord shape (getTrip includes isLiked).
+      return { ...trip, isLiked: false };
     });
   }
 
@@ -171,10 +174,15 @@ export class TripsService {
       include: {
         locations: { orderBy: { order: 'asc' } },
         coverPhoto: true,
+        media: { orderBy: { order: 'asc' } },
       },
     });
 
-    return updated;
+    const isLiked = Boolean(
+      await this.prisma.like.findUnique({ where: { tripId_userId: { tripId, userId } } }),
+    );
+
+    return { ...updated, isLiked };
   }
 
   async deleteTrip(userId: string, tripId: string) {

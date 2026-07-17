@@ -5,8 +5,9 @@ import { useAuth, SignInButton } from "@clerk/nextjs";
 import { Heart, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toaster";
 import { cn, formatRelativeDate } from "@/lib/utils";
-import { getMe } from "@/lib/api";
+import { getMeCached } from "@/lib/use-me";
 import {
   getComments,
   createComment,
@@ -24,6 +25,7 @@ function authorName(user: CommentAuthor) {
 
 export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwnerId: string }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { toast } = useToast();
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwn
       try {
         const token = await getToken();
         if (!token) return;
-        const [{ items }, me] = await Promise.all([getComments(token, tripId), getMe(token)]);
+        const [{ items }, me] = await Promise.all([getComments(token, tripId), getMeCached(token)]);
         if (active) {
           setComments(items);
           setViewerId(me.id);
@@ -71,10 +73,12 @@ export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwn
     setPosting(true);
     try {
       const token = await getToken();
-      if (!token) return;
+      if (!token) throw new Error("Not signed in");
       await createComment(token, tripId, { content: text.trim() });
       setText("");
       await refresh();
+    } catch {
+      toast("Couldn't post your comment — try again.", "error");
     } finally {
       setPosting(false);
     }
@@ -86,21 +90,27 @@ export function CommentThread({ tripId, tripOwnerId }: { tripId: string; tripOwn
     setPosting(true);
     try {
       const token = await getToken();
-      if (!token) return;
+      if (!token) throw new Error("Not signed in");
       await createComment(token, tripId, { content: replyText.trim(), parentId });
       setReplyText("");
       setReplyTo(null);
       await refresh();
+    } catch {
+      toast("Couldn't post your reply — try again.", "error");
     } finally {
       setPosting(false);
     }
   }
 
   async function handleDelete(commentId: string) {
-    const token = await getToken();
-    if (!token) return;
-    await deleteComment(token, commentId);
-    await refresh();
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      await deleteComment(token, commentId);
+      await refresh();
+    } catch {
+      toast("Couldn't delete the comment — try again.", "error");
+    }
   }
 
   function updateLikeState(c: CommentRecord, id: string, liked: boolean): CommentRecord {

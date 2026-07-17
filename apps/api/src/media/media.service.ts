@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@prisma/prisma.service';
 import { PresignedUrlDto, UpdateMediaDto } from './media.dto';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
@@ -58,28 +58,21 @@ export class MediaService {
         ? 'AUDIO'
         : 'IMAGE';
 
-    // The media row and the trip's denormalized counters move together.
-    await this.prisma.$transaction(async (tx) => {
-      await tx.media.create({
-        data: {
-          id: mediaId,
-          tripId: dto.tripId,
-          userId,
-          type: mediaType,
-          mimeType: dto.contentType,
-          filename: dto.filename,
-          originalUrl: cdnUrl,
-          fileSize: BigInt(dto.fileSize || 0),
-          processingStatus: 'uploading',
-        },
-      });
-
-      if (mediaType === 'IMAGE' || mediaType === 'VIDEO') {
-        await tx.trip.update({
-          where: { id: dto.tripId },
-          data: mediaType === 'VIDEO' ? { videosCount: { increment: 1 } } : { photosCount: { increment: 1 } },
-        });
-      }
+    // Counters and storage are NOT touched here — the client hasn't uploaded
+    // anything yet. They move on POST /media/:id/confirm, after the S3 PUT
+    // succeeds, so abandoned uploads never inflate them.
+    await this.prisma.media.create({
+      data: {
+        id: mediaId,
+        tripId: dto.tripId,
+        userId,
+        type: mediaType,
+        mimeType: dto.contentType,
+        filename: dto.filename,
+        originalUrl: cdnUrl,
+        fileSize: BigInt(dto.fileSize || 0),
+        processingStatus: 'uploading',
+      },
     });
 
     return {
@@ -95,6 +88,37 @@ export class MediaService {
     if (dtos.length > 50) throw new BadRequestException('Maximum 50 files per batch');
     const results = await Promise.all(dtos.map((dto) => this.getPresignedUrl(userId, dto)));
     return { data: results, count: results.length };
+  }
+
+  // Called by the client after its S3 PUT succeeds. This is the moment the
+  // upload becomes real: flip processingStatus, count it on the trip, and
+  // charge the user's storage. Idempotent — a retried confirm is a no-op.
+  async confirmUpload(userId: string, mediaId: string) {
+    const media = await this.prisma.media.findUnique({ where: { id: mediaId } });
+    if (!media) throw new NotFoundException('Media not found');
+    if (media.userId !== userId) throw new ForbiddenException();
+    if (media.processingStatus === 'completed') return media;
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.media.update({
+        where: { id: mediaId },
+        data: { processingStatus: 'completed' },
+      });
+
+      if (media.type === 'IMAGE' || media.type === 'VIDEO') {
+        await tx.trip.update({
+          where: { id: media.tripId },
+          data: media.type === 'VIDEO' ? { videosCount: { increment: 1 } } : { photosCount: { increment: 1 } },
+        });
+      }
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { storageUsedBytes: { increment: media.fileSize ?? BigInt(0) } },
+      });
+
+      return updated;
+    });
   }
 
   async listMedia(
@@ -166,17 +190,30 @@ export class MediaService {
     if (!media) throw new NotFoundException('Media not found');
     if (media.userId !== userId) throw new ForbiddenException();
 
+    // Counters/storage were only charged at confirm time, so only confirmed
+    // media gives them back.
+    const wasConfirmed = media.processingStatus === 'completed';
     await this.prisma.$transaction(async (tx) => {
       await tx.media.delete({ where: { id: mediaId } });
 
-      if (media.type === 'IMAGE' || media.type === 'VIDEO') {
+      if (wasConfirmed && (media.type === 'IMAGE' || media.type === 'VIDEO')) {
         await tx.trip.update({
           where: { id: media.tripId },
           data: media.type === 'VIDEO' ? { videosCount: { decrement: 1 } } : { photosCount: { decrement: 1 } },
         });
       }
+      if (wasConfirmed) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { storageUsedBytes: { decrement: media.fileSize ?? BigInt(0) } },
+        });
+      }
     });
-    // TODO: Trigger S3 deletion async
+
+    // Best-effort S3 cleanup — the DB row is already gone, so a failed
+    // object delete only costs storage, never correctness. Fire and forget.
+    this.deleteS3Object(media.originalUrl);
+
     return { deleted: true };
   }
 
@@ -187,6 +224,25 @@ export class MediaService {
 
     // TODO: Queue AI enhancement job
     return { queued: true, mediaId };
+  }
+
+  private deleteS3Object(publicUrl: string): void {
+    let key: string | null = null;
+    try {
+      key = new URL(publicUrl).pathname.replace(/^\//, '') || null;
+    } catch {
+      key = null;
+    }
+    if (!key) return;
+
+    this.s3Client
+      .send(
+        new DeleteObjectCommand({
+          Bucket: this.configService.get('S3_BUCKET_NAME', 'wanderverse-media'),
+          Key: key,
+        }),
+      )
+      .catch((err) => this.logger.warn(`S3 delete failed for ${key}: ${err.message}`));
   }
 
   // Upload rights mirror trips.service#getEditableTrip: owner or non-VIEWER

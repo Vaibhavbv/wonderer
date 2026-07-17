@@ -16,11 +16,11 @@
 
 ---
 
-## Health — `AppController` (no version prefix)
+## Health — `AppController`
 | Method | Path | Auth | Purpose | Status |
 |---|---|---|---|---|
-| GET | `/health` | 🌐 | Liveness: status/timestamp/service/version | ✅ |
-| GET | `/ready` | 🌐 | Readiness probe | ✅ |
+| GET | `/v1/health` | 🌐 | Liveness: status/timestamp/service/version (process only — URI versioning applies, `/health` 404s) | ✅ |
+| GET | `/v1/ready` | 🌐 | Readiness: pings Postgres (2s timeout) → 503 when the DB is down | ✅ |
 
 ---
 
@@ -79,24 +79,26 @@ All ✅. Note: subscription fields are **read-only** — nothing writes them (pa
 ## Media — `/v1/media`  🔒
 | Method | Path | Purpose | Input | Output | Status |
 |---|---|---|---|---|---|
-| POST | `/v1/media/presigned-url` | Mint S3 presign + create `Media` row | `PresignedUrlDto {filename, contentType, fileSize, tripId}` | `{uploadUrl, media}` | ✅ (15-min TTL; enforces `storageQuotaBytes`) |
+| POST | `/v1/media/presigned-url` | Mint S3 presign + create `Media` row (`processingStatus: uploading`) | `PresignedUrlDto {filename, contentType, fileSize, tripId}` | `{mediaId, uploadUrl, uploadFields, publicUrl, expiresAt}` | ✅ (15-min TTL; enforces `storageQuotaBytes`; requires edit rights on `tripId`; counters NOT touched here) |
+| POST | `/v1/media/:id/confirm` | Confirm the S3 PUT succeeded — flips `processingStatus`, increments trip photo/video counters, charges `storageUsedBytes` | — | media | ✅ (idempotent; owner only) |
 | POST | `/v1/media/batch-presigned-urls` | Batch (max 50) | `PresignedUrlDto[]` | array | ✅ |
 | GET | `/v1/media/trip/:tripId` | List trip media (scoped to `{tripId,userId}`) | pagination | media[] + meta | ✅ |
 | GET | `/v1/media/:id` | Metadata | — | media | ✅ (owner) |
 | PATCH | `/v1/media/:id` | Update | `UpdateMediaDto {caption?, tags?, locationName?, latitude?, longitude?, locationId?}` | media | ✅ (validates `locationId` in same trip) |
-| DELETE | `/v1/media/:id` | Delete | — | 204 | ⚠️ **leaks S3 object** (DB row only — WV-107) |
+| DELETE | `/v1/media/:id` | Delete | — | 204 | ✅ (counters/storage refunded only for confirmed media; best-effort S3 object delete — trip/account cascades still leak, WV-107 remainder) |
 | POST | `/v1/media/:id/process` | Trigger processing | — | `{queued:true}` | ⚠️ **no-op stub** |
 
-**Upload flow:** presign → browser `PUT`s bytes directly to S3 → `PATCH` to attach metadata.
+**Upload flow:** presign → browser `PUT`s bytes directly to S3 → **`POST /:id/confirm`** (counts it + charges storage) → `PATCH` to attach metadata.
 
 ---
 
 ## AI — `/v1/ai`  🔒
 | Method | Path | Purpose | Input | Output | Status |
 |---|---|---|---|---|---|
-| POST | `/v1/ai/generate-story` | Queue story generation | `GenerateStoryDto {tripId, tone?, length?, language?, focusAreas?, userPrompt?}` | `AIJob` | ✅ (BullMQ→OpenAI `gpt-4o`; checks `aiCreditsQuota`) |
-| POST | `/v1/ai/generate-title` | Queue title generation | `GenerateTitleDto {destinations[], dates?, theme?}` | `AIJob` | ✅ (`gpt-4o-mini`) |
-| POST | `/v1/ai/enhance-photo` | Queue photo enhancement | `EnhancePhotoDto {mediaId, enhancementType?}` | `AIJob` | ⚠️ **placeholder** — processor returns fake success |
+| POST | `/v1/ai/generate-story` | Queue story generation | `GenerateStoryDto {tripId, tone?, length?, language?, focusAreas?, userPrompt?}` | `{jobId, status, estimatedDuration}` | ✅ (BullMQ→OpenAI `gpt-4o`; checks `aiCreditsQuota`; requires owner/collaborator on `tripId`; credit refunded if all retries fail) |
+| POST | `/v1/ai/generate-title` | Queue title generation | `GenerateTitleDto {destinations[], dates?, theme?}` | `{jobId, status, estimatedDuration}` | ✅ (`gpt-4o-mini`) |
+| POST | `/v1/ai/enhance-photo` | Queue photo enhancement | `EnhancePhotoDto {mediaId, enhancementType?}` | `{jobId, status, estimatedDuration}` | ⚠️ **placeholder** — processor returns fake success (owner-checked `mediaId`) |
+| POST | `/v1/webhooks/clerk` | Clerk user lifecycle sync (svix-signature verified, raw body) — `user.created/updated/deleted` upsert/delete the DB user | Clerk webhook payload | `{received}` | ✅ (503 when `CLERK_WEBHOOK_SECRET` unset so Clerk retries) |
 | GET | `/v1/ai/jobs/:id` | Job status/result | — | `AIJob` | ✅ (owner) |
 
 Poll `GET /v1/ai/jobs/:id` for async results. Enum job types `GENERATE_CAPTIONS/AUTO_LAYOUT/TRANSLATE/VOICE_NARRATE/RECONSTRUCT_ROUTE` have **no endpoint** (WV-801).

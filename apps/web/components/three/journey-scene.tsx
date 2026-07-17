@@ -17,6 +17,19 @@ interface ProgressSource {
   get(): number;
 }
 
+// Frame-loop scratch objects: useFrame runs single-threaded, so these are
+// safely shared. Allocating them per frame (60×/s each) is pure GC pressure.
+const _pos = new THREE.Vector3();
+const _tangent = new THREE.Vector3();
+const _up = new THREE.Vector3();
+const _side = new THREE.Vector3();
+const _realUp = new THREE.Vector3();
+const _turn = new THREE.Vector3();
+const _surf = new THREE.Vector3();
+const _trailP = new THREE.Vector3();
+const _lift = new THREE.Vector3();
+const _basis = new THREE.Matrix4();
+
 function toVector3(lat: number, lng: number, radius: number): THREE.Vector3 {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lng + 180) * (Math.PI / 180);
@@ -187,6 +200,8 @@ function Route({
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
   const SEGMENTS = 480;
   const indexCount = useMemo(() => SEGMENTS * 6 * 6, []); // tubularSegments * radialSegments * 6
+  // Lerp target reallocates only when the leg's accent changes, not per frame.
+  const accentColor = useMemo(() => new THREE.Color(accent), [accent]);
 
   useFrame((_, delta) => {
     const t = THREE.MathUtils.clamp(progress.get(), 0, 1);
@@ -194,7 +209,7 @@ function Route({
       // Draw the tube progressively — earlier legs stay softly lit.
       drawnRef.current.geometry.setDrawRange(0, Math.floor(indexCount * t));
     }
-    if (matRef.current) matRef.current.color.lerp(new THREE.Color(accent), Math.min(1, delta * 3));
+    if (matRef.current) matRef.current.color.lerp(accentColor, Math.min(1, delta * 3));
   });
 
   return (
@@ -295,27 +310,28 @@ function TravelVehicle({
     return { positions, colors };
   }, []);
 
+  const accentColor = useMemo(() => new THREE.Color(accent), [accent]);
+
   useFrame((state, delta) => {
     const raw = THREE.MathUtils.clamp(progress.get(), 0, 1);
     // realistic easing: the vehicle glides toward the scroll target
     smoothT.current = THREE.MathUtils.damp(smoothT.current, raw, 4.5, delta);
     const t = THREE.MathUtils.clamp(smoothT.current, 0.0001, 0.9999);
 
-    const pos = curve.getPointAt(t);
-    const tangent = curve.getTangentAt(t).normalize();
-    const up = pos.clone().normalize();
+    const pos = curve.getPointAt(t, _pos);
+    const tangent = curve.getTangentAt(t, _tangent).normalize();
+    const up = _up.copy(pos).normalize();
 
     const g = groupRef.current;
     if (g) {
       g.position.copy(pos).addScaledVector(up, 0.02);
       // orient: forward = tangent, up = away from the planet
-      const m = new THREE.Matrix4();
-      const side = new THREE.Vector3().crossVectors(up, tangent).normalize();
-      const realUp = new THREE.Vector3().crossVectors(tangent, side).normalize();
-      m.makeBasis(tangent, realUp.negate(), side);
-      g.quaternion.setFromRotationMatrix(m);
+      const side = _side.crossVectors(up, tangent).normalize();
+      const realUp = _realUp.crossVectors(tangent, side).normalize();
+      _basis.makeBasis(tangent, realUp.negate(), side);
+      g.quaternion.setFromRotationMatrix(_basis);
       // bank into turns
-      const turn = new THREE.Vector3().subVectors(tangent, prevTangent.current);
+      const turn = _turn.subVectors(tangent, prevTangent.current);
       const bank = THREE.MathUtils.clamp(turn.dot(side) * -30, -0.5, 0.5);
       g.rotateOnWorldAxis(tangent, bank);
       prevTangent.current.copy(tangent);
@@ -325,8 +341,8 @@ function TravelVehicle({
 
     // soft shadow hugging the surface below the craft
     if (shadowRef.current) {
-      const surf = pos.clone().normalize().multiplyScalar(R * 1.004);
-      shadowRef.current.position.copy(surf);
+      _surf.copy(pos).normalize().multiplyScalar(R * 1.004);
+      shadowRef.current.position.copy(_surf);
       shadowRef.current.lookAt(0, 0, 0);
     }
 
@@ -334,14 +350,19 @@ function TravelVehicle({
     const geo = trailGeo.current;
     if (geo) {
       const { positions, colors } = trail;
-      const c = new THREE.Color(accent);
+      const c = accentColor;
       for (let i = 0; i < TRAIL_LEN; i++) {
         const back = t - (i / TRAIL_LEN) * 0.02;
-        const p = curve.getPointAt(THREE.MathUtils.clamp(back, 0.0001, 0.9999));
-        const lift = p.clone().normalize().multiplyScalar(0.02);
-        positions.set([p.x + lift.x, p.y + lift.y, p.z + lift.z], i * 3);
+        const p = curve.getPointAt(THREE.MathUtils.clamp(back, 0.0001, 0.9999), _trailP);
+        const lift = _lift.copy(p).normalize().multiplyScalar(0.02);
+        const j = i * 3;
+        positions[j] = p.x + lift.x;
+        positions[j + 1] = p.y + lift.y;
+        positions[j + 2] = p.z + lift.z;
         const fade = EASE_OUT(1 - i / TRAIL_LEN);
-        colors.set([c.r * fade, c.g * fade, c.b * fade], i * 3);
+        colors[j] = c.r * fade;
+        colors[j + 1] = c.g * fade;
+        colors[j + 2] = c.b * fade;
       }
       geo.attributes.position.needsUpdate = true;
       geo.attributes.color.needsUpdate = true;
@@ -415,6 +436,7 @@ function MoodParticles({
   }, [count]);
 
   const falling = variant === "snow" || variant === "petals" || variant === "leaves";
+  const accentColor = useMemo(() => new THREE.Color(accent), [accent]);
 
   useFrame((state, delta) => {
     const pts = ref.current;
@@ -438,7 +460,7 @@ function MoodParticles({
     pts.rotation.y = THREE.MathUtils.damp(pts.rotation.y, pointer.current.x * 0.12, 2, delta);
     pts.rotation.x = THREE.MathUtils.damp(pts.rotation.x, pointer.current.y * 0.08, 2, delta);
     // tint drifts toward the destination's mood
-    if (matRef.current) matRef.current.color.lerp(new THREE.Color(accent), Math.min(1, delta * 1.5));
+    if (matRef.current) matRef.current.color.lerp(accentColor, Math.min(1, delta * 1.5));
   });
 
   return (

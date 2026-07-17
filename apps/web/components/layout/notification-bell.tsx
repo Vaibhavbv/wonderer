@@ -23,8 +23,15 @@ export function NotificationBell({ variant = "light" }: { variant?: "light" | "d
     function onClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   if (!isSignedIn) return null;

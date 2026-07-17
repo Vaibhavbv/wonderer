@@ -64,6 +64,9 @@ export function JournalEditor({ trip, canEdit }: { trip: TripRecord; canEdit: bo
     if (!dirty) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
+      // Chrome/Safari only show the unsaved-changes prompt when returnValue
+      // is set — preventDefault() alone is a no-op there.
+      e.returnValue = "";
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);

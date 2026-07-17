@@ -174,6 +174,16 @@ export async function getPresignedUrl(
   return unwrap<PresignedUrlResponse>(res);
 }
 
+// Tells the API the S3 PUT succeeded — this is what makes the upload count
+// on the trip and against the user's storage quota.
+export async function confirmUpload(token: string, mediaId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/v1/media/${encodeURIComponent(mediaId)}/confirm`, {
+    method: "POST",
+    headers: authHeaders(token, false),
+  });
+  await unwrap(res);
+}
+
 export async function uploadToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
   const res = await fetch(uploadUrl, {
     method: "PUT",

@@ -12,6 +12,9 @@ import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug'],
+    // Webhook signature verification (svix) signs the exact request bytes, so
+    // the raw body must be preserved alongside the parsed JSON.
+    rawBody: true,
   });
 
   const configService = app.get(ConfigService);

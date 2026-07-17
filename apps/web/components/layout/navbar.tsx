@@ -17,9 +17,22 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    // rAF-coalesced: scroll can fire far faster than the frame rate (Lenis,
+    // touch), and each raw call would be a React setState.
+    let raf = 0;
+    const handleScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        setScrolled(window.scrollY > 20);
+      });
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
@@ -95,6 +108,8 @@ export function Navbar() {
           <button
             className="md:hidden p-2 rounded-md text-text-primary"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

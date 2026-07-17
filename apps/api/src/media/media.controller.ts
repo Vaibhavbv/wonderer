@@ -31,6 +31,12 @@ export class MediaController {
     return this.mediaService.getBatchPresignedUrls(userId, dtos);
   }
 
+  @Post(':id/confirm')
+  @ApiOperation({ summary: 'Confirm a completed S3 upload (counts it and charges storage)' })
+  async confirmUpload(@CurrentUser('id') userId: string, @Param('id') mediaId: string) {
+    return this.mediaService.confirmUpload(userId, mediaId);
+  }
+
   @Get('trip/:tripId')
   @ApiOperation({ summary: 'List media for a trip' })
   async listMedia(

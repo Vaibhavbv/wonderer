@@ -1,4 +1,4 @@
-import { getPresignedUrl, updateMedia, uploadToPresignedUrl } from "./trip-api";
+import { confirmUpload, getPresignedUrl, updateMedia, uploadToPresignedUrl } from "./trip-api";
 
 export interface UploadResult {
   uploadedIds: string[];
@@ -26,6 +26,9 @@ export async function uploadTripPhotos(
         tripId,
       });
       await uploadToPresignedUrl(presigned.uploadUrl, file);
+      // Counts the photo on the trip and charges storage — only after the
+      // PUT actually succeeded.
+      await confirmUpload(token, presigned.mediaId);
       if (locationId) {
         await updateMedia(token, presigned.mediaId, { locationId });
       }

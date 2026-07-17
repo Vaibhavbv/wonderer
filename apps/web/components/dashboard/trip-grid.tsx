@@ -107,7 +107,7 @@ export function TripGrid({ trips }: { trips: TripSummary[] }) {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full bg-surface-pressed bg-gradient-to-br from-primary-500/25 to-secondary-500/25" />
+                    <div className="w-full h-full bg-surface-pressed bg-gradient-to-br from-primary-500/25 to-primary-900/40" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute top-3 left-3 flex items-center gap-2">

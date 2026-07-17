@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -8,6 +9,28 @@ import { TripDetail } from "@/components/trips/trip-detail";
 import { getTrip } from "@/lib/trip-api";
 import { getMyProfile } from "@/lib/users-api";
 import { ApiError } from "@/lib/api";
+
+// Shared links should unfurl with the trip's real title/cover. The anonymous
+// fetch only succeeds for PUBLIC/UNLISTED trips — private ones keep the
+// generic app metadata, leaking nothing.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const trip = await getTrip(null, id);
+    const title = `${trip.title} — Wanderverse`;
+    const description =
+      trip.description ??
+      `A journey through ${trip.locations.map((l) => l.name).join(", ") || "the world"}.`;
+    const image = trip.coverPhoto?.variants?.large?.url ?? trip.coverPhoto?.originalUrl;
+    return {
+      title,
+      description,
+      openGraph: { title, description, type: "article", ...(image && { images: [{ url: image }] }) },
+    };
+  } catch {
+    return { title: "Trip — Wanderverse" };
+  }
+}
 
 // PUBLIC/UNLISTED trips render for signed-out visitors too — that's what
 // makes shared links work. PRIVATE trips 403 on the API and land on 404 here.

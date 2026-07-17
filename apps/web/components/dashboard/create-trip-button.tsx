@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { Plus, X, ImagePlus, MapPin } from "lucide-react";
@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createTrip, updateTrip } from "@/lib/trip-api";
+import { useToast } from "@/components/ui/toaster";
+import { createTrip, updateTrip, type TripRecord } from "@/lib/trip-api";
 import { uploadTripPhotos } from "@/lib/upload";
 
 interface DraftDestination {
@@ -49,7 +50,11 @@ export function CreateTripButton() {
   const [destinations, setDestinations] = useState<DraftDestination[]>([emptyDestination()]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Survives a failed photo upload: pressing "Create Trip" again reuses the
+  // trip that was already created instead of creating a duplicate.
+  const createdTripRef = useRef<TripRecord | null>(null);
   const { getToken } = useAuth();
+  const { toast } = useToast();
   const router = useRouter();
 
   function updateDestination(key: string, patch: Partial<DraftDestination>) {
@@ -69,6 +74,7 @@ export function CreateTripButton() {
     setError(null);
     setTitle("");
     setDestinations([emptyDestination()]);
+    createdTripRef.current = null;
   }
 
   async function handleCreate() {
@@ -88,23 +94,31 @@ export function CreateTripButton() {
       const token = await getToken();
       if (!token) throw new Error("Not signed in");
 
-      const trip = await createTrip(token, {
-        title: title.trim(),
-        locations: validDestinations.map((d) => ({
-          name: d.name.trim(),
-          country: d.country.trim() || undefined,
-          notes: d.notes.trim() || undefined,
-          // Coordinates are optional here — you can set them later in Edit
-          // trip; 0,0 marks "not placed yet".
-          latitude: parseCoord(d.latitude, -90, 90) ?? 0,
-          longitude: parseCoord(d.longitude, -180, 180) ?? 0,
-        })),
-      });
+      // Uploads need a tripId for their presigned URLs, so the trip must
+      // exist first. If a previous attempt already created it (an upload
+      // failed), reuse it rather than creating a duplicate.
+      let trip = createdTripRef.current;
+      if (!trip) {
+        trip = await createTrip(token, {
+          title: title.trim(),
+          locations: validDestinations.map((d) => ({
+            name: d.name.trim(),
+            country: d.country.trim() || undefined,
+            notes: d.notes.trim() || undefined,
+            // Coordinates are optional here — you can set them later in Edit
+            // trip; 0,0 marks "not placed yet".
+            latitude: parseCoord(d.latitude, -90, 90) ?? 0,
+            longitude: parseCoord(d.longitude, -180, 180) ?? 0,
+          })),
+        });
+        createdTripRef.current = trip;
+      }
+      const tripId = trip.id;
 
       const uploadedIds = await Promise.all(
         trip.locations.map(async (location, idx) => {
           const files = validDestinations[idx]?.files ?? [];
-          const { uploadedIds: ids } = await uploadTripPhotos(token, trip.id, files, location.id);
+          const { uploadedIds: ids } = await uploadTripPhotos(token, tripId, files, location.id);
           return ids;
         }),
       );
@@ -113,15 +127,24 @@ export function CreateTripButton() {
       const firstPhotoId = uploadedIds.flat()[0];
       if (firstPhotoId) {
         try {
-          await updateTrip(token, trip.id, { coverPhotoId: firstPhotoId });
+          await updateTrip(token, tripId, { coverPhotoId: firstPhotoId });
         } catch (err) {
           console.error("Failed to set cover photo", err);
         }
       }
 
-      router.push(`/trips/${trip.id}/wander`);
+      createdTripRef.current = null;
+      setIsOpen(false);
+      toast("Trip created — enjoy the journey", "success");
+      router.push(`/trips/${tripId}/wander`);
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create trip");
+      const alreadyCreated = Boolean(createdTripRef.current);
+      setError(
+        (err instanceof Error ? err.message : "Failed to create trip") +
+          (alreadyCreated ? " — your trip was saved; retrying will only re-attempt the photos." : ""),
+      );
+    } finally {
       setSubmitting(false);
     }
   }

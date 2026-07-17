@@ -182,6 +182,8 @@
 12. **Lock CORS defaults** for production (`CORS_ORIGINS` explicit, no `origin:true`+credentials).
 
 ### Phase 2 — UX & functionality (make it feel finished)
+
+> **Status: ✅ implemented** — toast layer + wiring, idempotent create-trip retry, upload confirm lifecycle (counters/storage charged on completion), AI retry/refund semantics + persisted `tokensUsed`, Clerk webhooks (svix), best-effort S3 delete on media delete, reduced-motion particle fix, route skeletons + `/wander` error boundary, notification polling, missing-coordinates guard.
 1. **Toast/feedback layer** — one lightweight provider; wire comment/share/create/like failures into it (today most failures are invisible).
 2. **Create-trip flow** — create the trip only after uploads succeed (or make retry idempotent); reset `submitting`; close the dialog on success.
 3. **Upload lifecycle** — add a confirm-upload endpoint that flips `processingStatus` and counts photos/videos on confirmation, not presign; start writing `storageUsedBytes` there so the quota becomes real.
@@ -193,6 +195,8 @@
 9. **Live-ish notifications** — poll interval or refetch-on-focus for the unread badge.
 
 ### Phase 3 — Performance & codebase (make it scale and stay maintainable)
+
+> **Status: ✅ largely implemented** — rAF-throttled scroll handlers, real `/v1/ready` DB probe, Redis-backed throttler storage, dead code/deps purged (5 components, RedisModule, stripe/sharp/websockets/lenis), `postprocessing` direct dep, complete `TripRecord` returns, viewer-identity cache, `apps/web/.env.example`, non-mutating lint script. **Deliberately deferred:** `next/image` adoption (user-media hosts unresolved), TripDetail/trip-editor splits (no component tests to guard the refactor), schema pruning (needs a destructive migration decision), authed e2e (needs real Clerk tokens in CI).
 1. **`next/image` adoption** across covers, avatars, grids (the config is already there).
 2. **Shared viewer context** — one `/users/me` resolution per page.
 3. **Server/client split** — `TripDetail`/`StatsCards`/`TripGrid` become server shells with client islands (Like/Share/Comments).
@@ -205,6 +209,8 @@
 10. **Contract cleanup** — complete `TripRecord` returns from create/update; correct `11_API_REFERENCE.md` (health paths, presign shape, AI return); add `apps/web/.env.example`; migrate off `@clerk/clerk-sdk-node@^4`.
 
 ### Phase 4 — Premium polish (make it delightful)
+
+> **Status: ✅ implemented** (items 1–4, 6-metadata) — AiAssistPanel focus trap + Escape + focus return, navbar toggle aria, bell Escape-close, single-coral brand pass (stats cards, gradients, chips), `beforeunload` fix, journey-scene GC pass (scratch vectors, memoized lerp colors), OG metadata for public trip links. View transitions and sitemap remain future polish.
 1. **A11y pass** — focus trap + Escape for `AiAssistPanel`; `aria-expanded` on the navbar toggle; keyboard-navigable NotificationBell; consistent avatar alt text.
 2. **Brand consolidation** — single coral accent (fix the amber/blue stats cards, `primary→secondary` gradients, `bg-white/20` chips) per the design system.
 3. **Micro-interactions** — like/save feedback, `beforeunload` fix, empty-state illustrations.
